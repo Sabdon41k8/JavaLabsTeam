@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<variants>
+    <variant number="1">
+<![CDATA[
+package variant1_bankingaccounts;
+
+import java.math.BigDecimal;
+
+// Опис предметної області: Управління банківськими рахунками клієнтів.
+// Завдання коду: Забезпечити зняття та поповнення коштів на рахунках, переказ між рахунками та розрахунок відсотків.
+// 
+
+public class Variant1_BankingAccounts {
+
+    public static class BankAccount {
+        private String accountNumber;
+        private BigDecimal balance;
+
+        public BankAccount(String accountNumber, BigDecimal initialBalance) {
+            this.accountNumber = accountNumber;
+            this.balance = initialBalance;
+        }
+
+        public String getAccountNumber() { return accountNumber; }
+        public BigDecimal getBalance() { return balance; }
+
+        public void deposit(BigDecimal amount) {
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("Amount must be positive");
+            balance = balance.add(amount);
+        }
+
+        public void withdraw(BigDecimal amount) {
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("Amount must be positive");
+            if (amount.compareTo(balance) > 0) throw new IllegalStateException("Insufficient funds");
+            balance = balance.subtract(amount);
+        }
+    }
+
+    public static class FixedDepositAccount extends BankAccount {
+        private int termMonths;
+
+        public FixedDepositAccount(String accountNumber, BigDecimal initialBalance, int termMonths) {
+            super(accountNumber, initialBalance);
+            this.termMonths = termMonths;
+        }
+
+        public int getTermMonths() { return termMonths; }
+
+        @Override
+        public void withdraw(BigDecimal amount) {
+            // Порушення LSP: Спадкоємець відмовляється виконувати базовий контракт withdraw
+            throw new UnsupportedOperationException("Withdrawal is not allowed for Fixed Deposit accounts before maturity date!");
+        }
+    }
+
+    public static class BankService {
+        public void processMonthlyFee(BankAccount account, BigDecimal fee) {
+            // Клієнтський код розраховує на підтримку withdraw для будь-якого BankAccount
+            account.withdraw(fee);
+            System.out.println("Fee processed for " + account.getAccountNumber() + ". New balance: " + account.getBalance());
+        }
+    }
+}
+]]>
+    </variant>
+    <variant number="2">
+<![CDATA[
+package variant2_documentprocessing;
+
+// Опис предметної області: Електронний документообіг підприємства.
+// Завдання коду: Редагування, збереження та друк документів різних форматів у єдиному робочому просторі.
+// 
+
+public class Variant2_DocumentProcessing {
+
+    public static class Document {
+        private String title;
+        private String content;
+        private String filePath;
+
+        public Document(String title, String content, String filePath) {
+            this.title = title;
+            this.content = content;
+            this.filePath = filePath;
+        }
+
+        public String getTitle() { return title; }
+        public String getContent() { return content; }
+        public String getFilePath() { return filePath; }
+
+        public void setContent(String newContent) {
+            this.content = newContent;
+        }
+
+        public void save() {
+            System.out.println("Saving document '" + title + "' to path: " + filePath);
+        }
+
+        public void print() {
+            System.out.println("Printing document '" + title + "': " + content);
+        }
+    }
+
+    public static class ReadOnlyPdfDocument extends Document {
+        public ReadOnlyPdfDocument(String title, String content, String filePath) {
+            super(title, content, filePath);
+        }
+
+        @Override
+        public void setContent(String newContent) {
+            // Порушення LSP: Заборона модифікації вмісту
+            throw new UnsupportedOperationException("Cannot modify content of a read-only PDF document.");
+        }
+
+        @Override
+        public void save() {
+            // Порушення LSP: Відмова від виконання операції збереження
+            throw new IllegalStateException("Read-only PDF documents cannot be saved/overwritten.");
+        }
+    }
+
+    public static class DocumentEditor {
+        public void appendWatermarkAndSave(Document doc, String watermark) {
+            // Клієнтський код впевнений, що будь-який Document можна редагувати та зберігати
+            doc.setContent(doc.getContent() + " 
+[Watermark: " + watermark + "]");
+            doc.save();
+        }
+    }
+}
+]]>
+    </variant>
+    <variant number="3">
+<![CDATA[
+package variant3_shapegeometry;
+
+// Опис предметної області: Геометричний графічний редактор та векторна графіка.
+// Завдання коду: Масштабування, обчислення площі та зміна розмірів геометричних фігур.
+// 
+
+public class Variant3_ShapeGeometry {
+
+    public static class Rectangle {
+        private double width;
+        private double height;
+
+        public Rectangle() {}
+
+        public Rectangle(double width, double height) {
+            this.width = width;
+            this.height = height;
+        }
+
+        public double getWidth() { return width; }
+        public void setWidth(double width) { this.width = width; }
+
+        public double getHeight() { return height; }
+        public void setHeight(double height) { this.height = height; }
+
+        public double getArea() {
+            return width * height;
+        }
+    }
+
+    public static class Square extends Rectangle {
+        @Override
+        public void setWidth(double width) {
+            // Порушення LSP: Зміна width змінює також height
+            super.setWidth(width);
+            super.setHeight(width);
+        }
+
+        @Override
+        public void setHeight(double height) {
+            // Порушення LSP: Зміна height змінює також width
+            super.setWidth(height);
+            super.setHeight(height);
+        }
+    }
+
+    public static class AreaCalculator {
+        public void resizeAndVerifyArea(Rectangle rect) {
+            rect.setWidth(5);
+            rect.setHeight(10);
+
+            // Клієнт очікує площу 50 (5 * 10). Для Square площа стане 100 (10 * 10)
+            double expectedArea = 50;
+            double actualArea = rect.getArea();
+
+            if (actualArea != expectedArea) {
+                throw new RuntimeException("LSP Violation detected! Expected area " + expectedArea + ", but got " + actualArea);
+            }
+        }
+    }
+}
+]]>
+    </variant>
+    <variant number="4">
+<![CDATA[
+package variant4_ecommercestorage;
+
+import java.math.BigDecimal;
+
+// Опис предметної області: Складський облік та логістика товарів інтернет-магазину.
+// Завдання коду: Інвентаризація товарів, поповнення залишків на складі та повернення браку постачальнику.
+// 
+
+public class Variant4_ECommerceStorage {
+
+    public static class InventoryItem {
+        private String sku;
+        private String title;
+        private int stockQuantity;
+        private BigDecimal unitPrice;
+
+        public InventoryItem(String sku, String title, int stockQuantity, BigDecimal unitPrice) {
+            this.sku = sku;
+            this.title = title;
+            this.stockQuantity = stockQuantity;
+            this.unitPrice = unitPrice;
+        }
+
+        public String getSku() { return sku; }
+        public String getTitle() { return title; }
+        public int getStockQuantity() { return stockQuantity; }
+        public BigDecimal getUnitPrice() { return unitPrice; }
+
+        public void restock(int amount) {
+            if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+            this.stockQuantity += amount;
+            System.out.println("Restocked " + amount + " units of " + title + ". Total stock: " + stockQuantity);
+        }
+
+        public void returnToSupplier(int amount) {
+            if (amount <= 0 || amount > stockQuantity) throw new IllegalArgumentException("Invalid return amount");
+            this.stockQuantity -= amount;
+            System.out.println("Returned " + amount + " units of " + title + " to supplier.");
+        }
+    }
+
+    public static class DigitalLicenseItem extends InventoryItem {
+        private String licenseKeyPattern;
+
+        public DigitalLicenseItem(String sku, String title, BigDecimal unitPrice, String licenseKeyPattern) {
+            super(sku, title, 999999, unitPrice);
+            this.licenseKeyPattern = licenseKeyPattern;
+        }
+
+        @Override
+        public void restock(int amount) {
+            // Порушення LSP: Цифрова ліцензія не має фізичного складу
+            throw new UnsupportedOperationException("Digital licenses have infinite stock and cannot be restocked manually.");
+        }
+
+        @Override
+        public void returnToSupplier(int amount) {
+            // Порушення LSP: Неможливо повернути цифрову ліцензію на склад
+            throw new IllegalStateException("Digital goods cannot be physically returned to supplier.");
+        }
+    }
+
+    public static class WarehouseManager {
+        public void processDefectiveReturn(InventoryItem item, int quantity) {
+            // Клієнтський алгоритм покладається на поліморфне повернення
+            item.returnToSupplier(quantity);
+        }
+    }
+}
+]]>
+    </variant>
+    <variant number="5">
+<![CDATA[
+package variant5_userpermissions;
+
+// Опис предметної області: Система адміністрування користувачів та облікових записів.
+// Завдання коду: Управління обліковими даними користувачів, зміна пароля, оновлення профілю та видалення запису.
+// 
+
+public class Variant5_UserPermissions {
+
+    public static class UserAccount {
+        private String username;
+        private String email;
+        private String passwordHash;
+        private boolean active = true;
+
+        public UserAccount(String username, String email, String passwordHash) {
+            this.username = username;
+            this.email = email;
+            this.passwordHash = passwordHash;
+        }
+
+        public String getUsername() { return username; }
+        public String getEmail() { return email; }
+        public String getPasswordHash() { return passwordHash; }
+        public boolean isActive() { return active; }
+
+        public void changePassword(String oldPassword, String newPassword) {
+            if (!this.passwordHash.equals(oldPassword)) throw new IllegalArgumentException("Invalid old password");
+            this.passwordHash = newPassword;
+            System.out.println("Password updated for user " + username);
+        }
+
+        public void deleteAccount() {
+            this.active = false;
+            System.out.println("Account " + username + " deactivated.");
+        }
+    }
+
+    public static class SystemServiceAccount extends UserAccount {
+        private String serviceApiKey;
+
+        public SystemServiceAccount(String username, String email, String serviceApiKey) {
+            super(username, email, "N/A_SYSTEM_KEY");
+            this.serviceApiKey = serviceApiKey;
+        }
+
+        @Override
+        public void changePassword(String oldPassword, String newPassword) {
+            // Порушення LSP: Системні акаунти не використовують паролі
+            throw new UnsupportedOperationException("System service accounts do not use passwords and cannot change them.");
+        }
+
+        @Override
+        public void deleteAccount() {
+            // Порушення LSP: Системний акаунт не підлягає видаленню
+            throw new IllegalStateException("System service accounts cannot be deactivated or deleted.");
+        }
+    }
+
+    public static class AdminUserMaintenance {
+        public void forcePasswordReset(UserAccount user, String temporaryPassword) {
+            // Адміністративний модуль очікує підтримку зміни пароля у кожного UserAccount
+            user.changePassword(user.getPasswordHash(), temporaryPassword);
+        }
+    }
+}
+]]>
+    </variant>
+    <variant number="6">
+<![CDATA[
+package variant6_vehiclefleet;
+
+// Опис предметної області: Автоматизована система управління транспортним парком.
+// Завдання коду: Заправка, технічний огляд, вимірювання залишку палива та пробігу транспортних засобів.
+// 
+
+public class Variant6_VehicleFleet {
+
+    public static class Vehicle {
+        private String licensePlate;
+        private double fuelLevelLiters;
+        private double tankCapacityLiters;
+
+        public Vehicle(String licensePlate, double fuelLevelLiters, double tankCapacityLiters) {
+            this.licensePlate = licensePlate;
+            this.fuelLevelLiters = fuelLevelLiters;
+            this.tankCapacityLiters = tankCapacityLiters;
+        }
+
+        public String getLicensePlate() { return licensePlate; }
+        public double getFuelLevelLiters() { return fuelLevelLiters; }
+        public double getTankCapacityLiters() { return tankCapacityLiters; }
+
+        public void refuel(double liters) {
+            if (liters <= 0) throw new IllegalArgumentException("Liters must be positive");
+            if (fuelLevelLiters + liters > tankCapacityLiters) throw new IllegalStateException("Tank overflow!");
+            fuelLevelLiters += liters;
+            System.out.println("Vehicle " + licensePlate + " refueled with " + liters + " L. Current level: " + fuelLevelLiters + " L");
+        }
+
+        public void drive(double distanceKm) {
+            double fuelConsumed = distanceKm * 0.08;
+            if (fuelConsumed > fuelLevelLiters) throw new IllegalStateException("Not enough fuel to drive!");
+            fuelLevelLiters -= fuelConsumed;
+            System.out.println("Vehicle " + licensePlate + " drove " + distanceKm + " km. Remaining fuel: " + fuelLevelLiters + " L");
+        }
+    }
+
+    public static class ElectricVehicle extends Vehicle {
+        private double batteryLevelKWh;
+
+        public ElectricVehicle(String licensePlate, double batteryLevelKWh) {
+            super(licensePlate, 0, 0);
+            this.batteryLevelKWh = batteryLevelKWh;
+        }
+
+        @Override
+        public void refuel(double liters) {
+            // Порушення LSP: Електромобіль не приймає рідке паливо
+            throw new UnsupportedOperationException("Electric vehicles cannot be refueled with liquid fuel! Use ChargeBattery instead.");
+        }
+    }
+
+    public static class GasStationManager {
+        public void refuelVehicleToFull(Vehicle vehicle) {
+            // Заправна станція розраховує на заправку будь-якого Vehicle
+            double needed = vehicle.getTankCapacityLiters() - vehicle.getFuelLevelLiters();
+            if (needed > 0) {
+                vehicle.refuel(needed);
+            }
+        }
+    }
+}
+]]>
+    </variant>
+    <variant number="7">
+<![CDATA[
+package variant7_employeemanagement;
+
+import java.math.BigDecimal;
+
+// Опис предметної області: HR-система та корпоративний облік персоналу.
+// Завдання коду: Нарахування заробітної плати, виплата річних бонусів та призначення соціальних пакетів.
+// 
+
+public class Variant7_EmployeeManagement {
+
+    public static class Employee {
+        private String employeeId;
+        private String fullName;
+        private BigDecimal baseSalary;
+
+        public Employee(String employeeId, String fullName, BigDecimal baseSalary) {
+            this.employeeId = employeeId;
+            this.fullName = fullName;
+            this.baseSalary = baseSalary;
+        }
+
+        public String getEmployeeId() { return employeeId; }
+        public String getFullName() { return fullName; }
+        public BigDecimal getBaseSalary() { return baseSalary; }
+
+        public void setSalary(BigDecimal newSalary) {
+            if (newSalary.compareTo(BigDecimal.ZERO) < 0) throw new IllegalArgumentException("Salary cannot be negative");
+            this.baseSalary = newSalary;
+        }
+
+        public BigDecimal calculateAnnualBonus(double performanceRating) {
+            if (performanceRating < 1.0 || performanceRating > 5.0) throw new IllegalArgumentException("Invalid rating");
+            return baseSalary.multiply(BigDecimal.valueOf(0.10 * performanceRating));
+        }
+    }
+
+    public static class VolunteerEmployee extends Employee {
+        private String organizationName;
+
+        public VolunteerEmployee(String employeeId, String fullName, String organizationName) {
+            super(employeeId, fullName, BigDecimal.ZERO);
+            this.organizationName = organizationName;
+        }
+
+        @Override
+        public void setSalary(BigDecimal newSalary) {
+            // Порушення LSP: Волонтери працюють на безоплатній основі
+            throw new IllegalStateException("Volunteers do not receive a salary and their base rate cannot be modified.");
+        }
+
+        @Override
+        public BigDecimal calculateAnnualBonus(double performanceRating) {
+            // Порушення LSP: Відмова від виплати фінансових бонусів
+            throw new UnsupportedOperationException("Volunteers are not eligible for financial annual bonuses.");
+        }
+    }
+
+    public static class PayrollService {
+        public void processYearEndBonuses(Employee employee, double rating) {
+            // HR-сервіс вважає, що для кожного співробітника можна обчислити бонус
+            BigDecimal bonus = employee.calculateAnnualBonus(rating);
+            System.out.println("Bonus for " + employee.getFullName() + ": $" + bonus);
+        }
+    }
+}
+]]>
+    </variant>
+    <variant number="8">
+<![CDATA[
+package variant8_datarepositories;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+// Опис предметної області: Універсальний шар доступу до даних (Data Access Layer).
+// Завдання коду: CRUD-операції (створення, читання, оновлення, видалення) сутностей у базі даних.
+// 
+
+public class Variant8_DataRepositories {
+
+    public static class DataRepository<T> {
+        protected final List<T> items = new ArrayList<>();
+
+        public void add(T entity) {
+            if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
+            items.add(entity);
+            System.out.println("[Repository] Entity added.");
+        }
+
+        public void update(T entity) {
+            if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
+            System.out.println("[Repository] Entity updated.");
+        }
+
+        public void remove(T entity) {
+            if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
+            items.remove(entity);
+            System.out.println("[Repository] Entity removed.");
+        }
+
+        public List<T> getAll() {
+            return Collections.unmodifiableList(items);
+        }
+    }
+
+    public static class ReadOnlyAuditRepository<T> extends DataRepository<T> {
+        @Override
+        public void add(T entity) {
+            // Порушення LSP: Заборона додавання в аудит-журнал
+            throw new UnsupportedOperationException("Direct addition is disabled for ReadOnlyAuditRepository.");
+        }
+
+        @Override
+        public void update(T entity) {
+            // Порушення LSP: Заборона оновлення зарезервованих записів
+            throw new IllegalStateException("Audit records are immutable and cannot be updated.");
+        }
+
+        @Override
+        public void remove(T entity) {
+            // Порушення LSP: Заборона видалення записів аудиту
+            throw new IllegalStateException("Audit records cannot be deleted.");
+        }
+    }
+
+    public static class DataSyncService<T> {
+        public void syncEntities(DataRepository<T> targetRepository, List<T> incomingData) {
+            // Модуль синхронізації вважає, що будь-який DataRepository підтримує add
+            for (T item : incomingData) {
+                targetRepository.add(item);
+            }
+        }
+    }
+}
+]]>
+    </variant>
+</variants>

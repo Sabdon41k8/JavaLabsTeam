@@ -1,0 +1,952 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<variants>
+    <variant number="1">
+    <![CDATA[
+    package variant1_orderprocessing;
+
+    import java.io.FileWriter;
+    import java.io.IOException;
+    import java.io.PrintWriter;
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+    import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
+    import java.util.List;
+
+    // Опис предметної області: Інтернет-магазин електроніки та побутової техніки.
+    // Завдання коду: Обробка замовлення клієнта — перевірка коректності даних, розрахунок загальної вартості з урахуванням накопичувальної знижки та ПДВ, формування HTML-рахунку, збереження замовлення у текстову базу даних та відправка email-підтвердження.
+
+    public class OrderItem {
+        private String itemId;
+        private String name;
+        private BigDecimal price;
+        private int quantity;
+
+        public String getItemId() { return itemId; }
+        public void setItemId(String itemId) { this.itemId = itemId; }
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public BigDecimal getPrice() { return price; }
+        public void setPrice(BigDecimal price) { this.price = price; }
+
+        public int getQuantity() { return quantity; }
+        public void setQuantity(int quantity) { this.quantity = quantity; }
+    }
+
+    public class OrderProcessor {
+        public void processOrder(String customerEmail, String customerCategory, List<OrderItem> items, String deliveryAddress) {
+            // 1. Валідація замовлення
+            if (customerEmail == null || customerEmail.isBlank() || !customerEmail.contains("@")) {
+                throw new IllegalArgumentException("Некоректна електронна адреса покупця.");
+            }
+
+            if (items == null || items.isEmpty()) {
+                throw new IllegalStateException("Кошик порожній.");
+            }
+
+            for (OrderItem item : items) {
+                if (item.getQuantity() <= 0 || item.getPrice() == null || item.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new IllegalArgumentException("Некоректний товар " + item.getName() + ": ціна та кількість мають бути більше 0.");
+                }
+            }
+
+            // 2. Розрахунок вартості, знижок та податків
+            BigDecimal subtotal = BigDecimal.ZERO;
+            for (OrderItem item : items) {
+                BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                subtotal = subtotal.add(itemTotal);
+            }
+
+            BigDecimal discountRate = BigDecimal.ZERO;
+            if ("VIP".equalsIgnoreCase(customerCategory)) {
+                discountRate = new BigDecimal("0.15");
+            } else if ("Regular".equalsIgnoreCase(customerCategory)) {
+                discountRate = new BigDecimal("0.05");
+            }
+
+            BigDecimal discountAmount = subtotal.multiply(discountRate);
+            BigDecimal taxableSubtotal = subtotal.subtract(discountAmount);
+            BigDecimal taxAmount = taxableSubtotal.multiply(new BigDecimal("0.20")); // ПДВ 20%
+            BigDecimal totalAmount = taxableSubtotal.add(taxAmount);
+
+            // 3. Формування HTML-рахунку
+            StringBuilder htmlInvoice = new StringBuilder("<html><body>");
+            htmlInvoice.append("<h1>Рахунок на замовлення для ").append(customerEmail).append("</h1>");
+            htmlInvoice.append("<p>Адреса доставки: ").append(deliveryAddress).append("</p>");
+            htmlInvoice.append("<table border='1'><tr><th>Товар</th><th>Кількість</th><th>Ціна</th></tr>");
+
+            for (OrderItem item : items) {
+                htmlInvoice.append("<tr><td>").append(item.getName())
+                           .append("</td><td>").append(item.getQuantity())
+                           .append("</td><td>").append(item.getPrice()).append(" грн</td></tr>");
+            }
+
+            htmlInvoice.append("</table>");
+            htmlInvoice.append("<p>Проміжна сума: ").append(subtotal).append(" грн</p>");
+            htmlInvoice.append("<p>Знижка (").append(customerCategory).append("): -").append(discountAmount).append(" грн</p>");
+            htmlInvoice.append("<p>ПДВ (20%): ").append(taxAmount).append(" грн</p>");
+            htmlInvoice.append("<h3>Загалом до сплати: ").append(totalAmount.setScale(2, RoundingMode.HALF_UP)).append(" грн</h3>");
+            htmlInvoice.append("</body></html>");
+
+            // 4. Збереження у локальну базу даних (файл)
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String record = String.format("%s|%s|%s|%s%n", timestamp, customerEmail, totalAmount, deliveryAddress);
+            try (FileWriter fw = new FileWriter("orders_db.txt", true);
+                 PrintWriter pw = new PrintWriter(fw)) {
+                pw.print(record);
+            } catch (IOException e) {
+                System.err.println("Помилка запису у файл бази даних: " + e.getMessage());
+            }
+
+            // 5. Відправка email сповіщення
+            try {
+                // Симуляція відправки email через SMTP
+                System.out.println("Надсилання email на " + customerEmail + " через smtp.store.local:587");
+                System.out.println("Тема: Ваше замовлення успішно оформлено");
+                System.out.println("Тіло: " + htmlInvoice.toString());
+            } catch (Exception ex) {
+                System.out.println("Помилка відправки email: " + ex.getMessage());
+            }
+        }
+    }
+]]>
+    </variant>
+
+    <variant number="2">
+    <![CDATA[
+    package variant2_medicalreport;
+
+    import java.io.FileWriter;
+    import java.io.IOException;
+    import java.time.Instant;
+
+    // Опис предметної області: Медична інформаційна система діагностичного центру.
+    // Завдання коду: Обробка діагностичних показників пацієнта — валідація фізіологічних параметрів, розрахунок індексу маси тіла (ІМТ) та ризику серцево-судинних захворювань, формування медичного звіту в форматі JSON, збереження запису в архівний журнал та надсилання термінового SMS-сповіщення лікарю при критичних показниках.
+
+    public class PatientData {
+        private String patientId;
+        private String fullName;
+        private double weightKg;
+        private double heightCm;
+        private int systolicBloodPressure;
+        private int diastolicBloodPressure;
+        private String doctorPhoneNumber;
+
+        public String getPatientId() { return patientId; }
+        public void setPatientId(String patientId) { this.patientId = patientId; }
+
+        public String getFullName() { return fullName; }
+        public void setFullName(String fullName) { this.fullName = fullName; }
+
+        public double getWeightKg() { return weightKg; }
+        public void setWeightKg(double weightKg) { this.weightKg = weightKg; }
+
+        public double getHeightCm() { return heightCm; }
+        public void setHeightCm(double heightCm) { this.heightCm = heightCm; }
+
+        public int getSystolicBloodPressure() { return systolicBloodPressure; }
+        public void setSystolicBloodPressure(int systolicBloodPressure) { this.systolicBloodPressure = systolicBloodPressure; }
+
+        public int getDiastolicBloodPressure() { return diastolicBloodPressure; }
+        public void setDiastolicBloodPressure(int diastolicBloodPressure) { this.diastolicBloodPressure = diastolicBloodPressure; }
+
+        public String getDoctorPhoneNumber() { return doctorPhoneNumber; }
+        public void setDoctorPhoneNumber(String doctorPhoneNumber) { this.doctorPhoneNumber = doctorPhoneNumber; }
+    }
+
+    public class MedicalReportManager {
+        public void processPatientDiagnostics(PatientData patient) {
+            // 1. Валідація вхідних медичних даних
+            if (patient == null) {
+                throw new IllegalArgumentException("Параметр patient не може бути null.");
+            }
+
+            if (patient.getWeightKg() <= 2 || patient.getWeightKg() > 300) {
+                throw new IllegalArgumentException("Некоректне значення ваги пацієнта.");
+            }
+
+            if (patient.getHeightCm() <= 40 || patient.getHeightCm() > 250) {
+                throw new IllegalArgumentException("Некоректне значення зросту пацієнта.");
+            }
+
+            if (patient.getSystolicBloodPressure() < 50 || patient.getDiastolicBloodPressure() < 30) {
+                throw new IllegalArgumentException("Показники тиску знаходяться за межами допустимого діапазону.");
+            }
+
+            // 2. Розрахунок медичних показників та оцінка ризику
+            double heightMeters = patient.getHeightCm() / 100.0;
+            double bmi = patient.getWeightKg() / (heightMeters * heightMeters);
+
+            String riskCategory;
+            if (bmi > 30 || patient.getSystolicBloodPressure() >= 140) {
+                riskCategory = "Високий ризик";
+            } else if (bmi >= 25 || patient.getSystolicBloodPressure() >= 130) {
+                riskCategory = "Помірний ризик";
+            } else {
+                riskCategory = "Низький ризик";
+            }
+
+            // 3. Формування JSON-звіту для медкартки
+            String jsonReport = String.format("{\n" +
+                    "  \"PatientId\": \"%s\",\n" +
+                    "  \"Name\": \"%s\",\n" +
+                    "  \"BMI\": %.2f,\n" +
+                    "  \"BloodPressure\": \"%d/%d\",\n" +
+                    "  \"Category\": \"%s\",\n" +
+                    "  \"GeneratedAt\": \"%s\"\n" +
+                    "}",
+                    patient.getPatientId(),
+                    patient.getFullName(),
+                    bmi,
+                    patient.getSystolicBloodPressure(), patient.getDiastolicBloodPressure(),
+                    riskCategory,
+                    Instant.now().toString()
+            );
+
+            // 4. Збереження у файл медогляду
+            String filename = "medical_report_" + patient.getPatientId() + ".json";
+            try (FileWriter writer = new FileWriter(filename)) {
+                writer.write(jsonReport);
+            } catch (IOException e) {
+                System.err.println("Помилка збереження JSON звіту: " + e.getMessage());
+            }
+
+            // 5. Відправка SMS лікарю при критичному стані
+            if ("Високий ризик".equals(riskCategory)) {
+                try {
+                    String smsMessage = String.format("УВАГА: Пацієнт %s має критичні показники! ІМТ: %.1f, Тиск: %d/%d",
+                            patient.getFullName(), bmi, patient.getSystolicBloodPressure(), patient.getDiastolicBloodPressure());
+                    System.out.println("Надсилання SMS на номер " + patient.getDoctorPhoneNumber() + " через http://sms-gateway.local/send");
+                    System.out.println("Повідомлення: " + smsMessage);
+                } catch (Exception ex) {
+                    System.out.println("Не вдалося відправити SMS лікарю: " + ex.getMessage());
+                }
+            }
+        }
+    }
+]]>
+    </variant>
+
+    <variant number="3">
+    <![CDATA[
+    package variant3_studentgradecalculator;
+
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+    import java.nio.charset.StandardCharsets;
+    import java.time.LocalDate;
+    import java.time.format.DateTimeFormatter;
+    import java.util.List;
+
+    // Опис предметної області: Деканат університету / Система обліку успішності студентів.
+    // Завдання коду: Обробка оцінок студента за семестр — валідація даних, розрахунок середнього бала (GPA) та розміру академічної стипендії, підготовка текстового витягу з відомості, експорт даних у CSV-файл та відправка сповіщення куратору групи.
+
+    public class CourseGrade {
+        private String courseName;
+        private int score; // 0 - 100
+        private int ectsCredits;
+
+        public String getCourseName() { return courseName; }
+        public void setCourseName(String courseName) { this.courseName = courseName; }
+
+        public int getScore() { return score; }
+        public void setScore(int score) { this.score = score; }
+
+        public int getEctsCredits() { return ectsCredits; }
+        public void setEctsCredits(int ectsCredits) { this.ectsCredits = ectsCredits; }
+    }
+
+    public class StudentGradeManager {
+        public void processStudentAcademicRecord(String studentId, String studentName, List<CourseGrade> grades, String curatorEmail) {
+            // 1. Перевірка вхідних оцінок
+            if (studentId == null || studentId.isBlank() || studentName == null || studentName.isBlank()) {
+                throw new IllegalArgumentException("Ідентифікатор та ім'я студента не можуть бути порожніми.");
+            }
+
+            if (grades == null || grades.isEmpty()) {
+                throw new IllegalStateException("Перелік дисциплін порожній.");
+            }
+
+            for (CourseGrade g : grades) {
+                if (g.getScore() < 0 || g.getScore() > 100) {
+                    throw new IllegalArgumentException("Неможлива оцінка " + g.getScore() + " з предмета " + g.getCourseName() + ".");
+                }
+            }
+
+            // 2. Розрахунок середньозваженого бала та призначеної стипендії
+            double totalWeightedScore = 0;
+            int totalCredits = 0;
+            boolean hasFailedCourses = false;
+
+            for (CourseGrade g : grades) {
+                totalWeightedScore += g.getScore() * g.getEctsCredits();
+                totalCredits += g.getEctsCredits();
+                if (g.getScore() < 60) {
+                    hasFailedCourses = true;
+                }
+            }
+
+            double gpa = totalWeightedScore / totalCredits;
+
+            BigDecimal scholarshipAmount = BigDecimal.ZERO;
+            if (!hasFailedCourses) {
+                if (gpa >= 90.0) {
+                    scholarshipAmount = new BigDecimal("2910.00"); // Підвищена
+                } else if (gpa >= 75.0) {
+                    scholarshipAmount = new BigDecimal("2000.00"); // Звичайна
+                }
+            }
+
+            // 3. Формування витягу з академічної відомості
+            StringBuilder transcript = new StringBuilder();
+            transcript.append("==========================================\n");
+            transcript.append("АКАДЕМІЧНА ДОВІДКА: ").append(studentName).append(" (ID: ").append(studentId).append(")\n");
+            transcript.append("==========================================\n");
+            for (CourseGrade g : grades) {
+                transcript.append(String.format("%-30s | %d Кредитів | Оцінка: %d%n", g.getCourseName(), g.getEctsCredits(), g.getScore()));
+            }
+            transcript.append("------------------------------------------\n");
+            transcript.append(String.format("Середній бал (GPA): %.2f%n", gpa));
+            transcript.append("Призначена стипендія: ").append(scholarshipAmount).append(" грн\n");
+
+            // 4. Експорт даних у CSV для бухгалтерії
+            String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String csvLine = String.format("%s;%s;%.2f;%s;%s%n", studentId, studentName, gpa, scholarshipAmount, dateStr);
+            try (FileOutputStream fos = new FileOutputStream("scholarship_registry.csv", true)) {
+                fos.write(csvLine.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                System.err.println("Помилка експорту у CSV: " + e.getMessage());
+            }
+
+            // 5. Відправка звіту куратору групи
+            if (curatorEmail != null && !curatorEmail.isBlank()) {
+                try {
+                    System.out.println("Надсилання пошти куратору " + curatorEmail + " через mail.univ.local");
+                    System.out.println("Тема: Успішність студента " + studentName);
+                    System.out.println("Тіло: " + transcript.toString());
+                } catch (Exception ex) {
+                    System.out.println("Помилка надсилання відомості куратору: " + ex.getMessage());
+                }
+            }
+        }
+    }
+]]>
+    </variant>
+
+    <variant number="4">
+    <![CDATA[
+    package variant4_hotelbooking;
+
+    import java.io.FileWriter;
+    import java.io.IOException;
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+    import java.time.LocalDate;
+    import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
+    import java.time.temporal.ChronoUnit;
+    import java.util.List;
+    import java.util.UUID;
+
+    // Опис предметної області: Готельний комплекс та система онлайн-бронювання.
+    // Завдання коду: Обробка заявки на бронювання номера — перевірка коректності дат, розрахунок вартості проживання з урахуванням сезону, дисконтної картки та додаткових послуг, генерація ваучера бронювання у форматі HTML, запис у базу даних та відправка підтвердження гостю через SMS/Viber API.
+
+    public class BookingRequest {
+        private String guestName;
+        private String guestPhone;
+        private String roomType; // Standard, Deluxe, Suite
+        private LocalDate checkInDate;
+        private LocalDate checkOutDate;
+        private boolean isLoyaltyMember;
+        private List<String> extraServices; // Breakfast, Spa, Transfer
+
+        public String getGuestName() { return guestName; }
+        public void setGuestName(String guestName) { this.guestName = guestName; }
+
+        public String getGuestPhone() { return guestPhone; }
+        public void setGuestPhone(String guestPhone) { this.guestPhone = guestPhone; }
+
+        public String getRoomType() { return roomType; }
+        public void setRoomType(String roomType) { this.roomType = roomType; }
+
+        public LocalDate getCheckInDate() { return checkInDate; }
+        public void setCheckInDate(LocalDate checkInDate) { this.checkInDate = checkInDate; }
+
+        public LocalDate getCheckOutDate() { return checkOutDate; }
+        public void setCheckOutDate(LocalDate checkOutDate) { this.checkOutDate = checkOutDate; }
+
+        public boolean isLoyaltyMember() { return isLoyaltyMember; }
+        public void setLoyaltyMember(boolean loyaltyMember) { isLoyaltyMember = loyaltyMember; }
+
+        public List<String> getExtraServices() { return extraServices; }
+        public void setExtraServices(List<String> extraServices) { this.extraServices = extraServices; }
+    }
+
+    public class HotelBookingService {
+        public void createBooking(BookingRequest request) {
+            // 1. Перевірка коректності параметрів бронювання
+            if (request.getGuestName() == null || request.getGuestName().isBlank() ||
+                request.getGuestPhone() == null || request.getGuestPhone().isBlank()) {
+                throw new IllegalArgumentException("Вкажіть ім'я гостя та контактний номер телефону.");
+            }
+
+            if (request.getCheckInDate().isBefore(LocalDate.now()) || !request.getCheckOutDate().isAfter(request.getCheckInDate())) {
+                throw new IllegalStateException("Некоректний період проживання.");
+            }
+
+            long nights = ChronoUnit.DAYS.between(request.getCheckInDate(), request.getCheckOutDate());
+
+            // 2. Розрахунок вартості проживання та послуг
+            BigDecimal basePricePerNight;
+            if ("Standard".equalsIgnoreCase(request.getRoomType())) {
+                basePricePerNight = new BigDecimal("1200");
+            } else if ("Deluxe".equalsIgnoreCase(request.getRoomType())) {
+                basePricePerNight = new BigDecimal("2500");
+            } else if ("Suite".equalsIgnoreCase(request.getRoomType())) {
+                basePricePerNight = new BigDecimal("4500");
+            } else {
+                throw new IllegalArgumentException("Невідома категорія номера.");
+            }
+
+            // Сезонний коефіцієнт (літній період)
+            int checkInMonth = request.getCheckInDate().getMonthValue();
+            if (checkInMonth >= 6 && checkInMonth <= 8) {
+                basePricePerNight = basePricePerNight.multiply(new BigDecimal("1.3"));
+            }
+
+            BigDecimal roomTotal = basePricePerNight.multiply(BigDecimal.valueOf(nights));
+
+            // Додаткові послуги
+            BigDecimal extrasTotal = BigDecimal.ZERO;
+            if (request.getExtraServices() != null) {
+                for (String service : request.getExtraServices()) {
+                    if ("Breakfast".equalsIgnoreCase(service)) extrasTotal = extrasTotal.add(new BigDecimal("300").multiply(BigDecimal.valueOf(nights)));
+                    if ("Spa".equalsIgnoreCase(service)) extrasTotal = extrasTotal.add(new BigDecimal("800"));
+                    if ("Transfer".equalsIgnoreCase(service)) extrasTotal = extrasTotal.add(new BigDecimal("500"));
+                }
+            }
+
+            BigDecimal grandTotal = roomTotal.add(extrasTotal);
+
+            if (request.isLoyaltyMember()) {
+                grandTotal = grandTotal.multiply(new BigDecimal("0.90")); // 10% знижка
+            }
+
+            DateTimeFormatter dmf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+            // 3. Генерація ваучера у форматі HTML
+            String voucherHtml = String.format("<html><body>" +
+                    "<h2>Ваучер Бронювання №%s</h2>" +
+                    "<p><b>Гість:</b> %s</p>" +
+                    "<p><b>Тип номера:</b> %s</p>" +
+                    "<p><b>Заїзд:</b> %s | <b>Виїзд:</b> %s (%d ночей)</p>" +
+                    "<p><b>Додаткові послуги:</b> %s</p>" +
+                    "<h3>Загальна вартість: %.2f грн</h3>" +
+                    "</body></html>",
+                    UUID.randomUUID().toString().substring(0, 8),
+                    request.getGuestName(),
+                    request.getRoomType(),
+                    request.getCheckInDate().format(dmf),
+                    request.getCheckOutDate().format(dmf),
+                    nights,
+                    request.getExtraServices() != null ? String.join(", ", request.getExtraServices()) : "Немає",
+                    grandTotal
+            );
+
+            // 4. Збереження запису бронювання у файл журналу
+            String nowStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String dbEntry = String.format("%s|%s|%s|%dNights|%.2f%n", nowStr, request.getGuestName(), request.getRoomType(), nights, grandTotal);
+            try (FileWriter writer = new FileWriter("hotel_bookings.log", true)) {
+                writer.write(dbEntry);
+            } catch (IOException e) {
+                System.err.println("Помилка логування бронювання: " + e.getMessage());
+            }
+
+            // 5. Відправка повідомлення гостю через зовнішній шлюз
+            try {
+                String message = String.format("Шановний(а) %s, ваше бронювання %s на %d ночей зафіксовано. Сума: %.2f грн.",
+                        request.getGuestName(), request.getRoomType(), nights, grandTotal);
+                System.out.println("Надсилання меседжу на номер " + request.getGuestPhone() + " через http://viber-gateway.local/send");
+                System.out.println("Текст: " + message);
+            } catch (Exception ex) {
+                System.out.println("Помилка відправки меседжу гостю: " + ex.getMessage());
+            }
+        }
+    }
+]]>
+    </variant>
+
+    <variant number="5">
+    <![CDATA[
+    package variant5_payrollsystem;
+
+    import java.io.FileOutputStream;
+    import java.io.FileWriter;
+    import java.io.IOException;
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+    import java.nio.charset.StandardCharsets;
+    import java.time.Instant;
+    import java.time.LocalDate;
+    import java.time.format.DateTimeFormatter;
+
+    // Опис предметної області: Бухгалтерський облік та розрахунок заробітної плати підприємства.
+    // Завдання коду: Розрахунок місячної заробітної плати працівника — валідація робочого часу, обчислення окладу, премій, податку на доходи фізичних осіб (ПДФО) та військового збору, створення розрахункового листка, експорт банківського реєстру та логування бухгалтерської операції.
+
+    public class EmployeePayrollData {
+        private String employeeId;
+        private String fullName;
+        private String taxId; // РНОКПП / ІПН
+        private BigDecimal baseHourlyRate;
+        private int hoursWorked;
+        private BigDecimal bonusAmount;
+        private String bankCardNumber;
+
+        public String getEmployeeId() { return employeeId; }
+        public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+
+        public String getFullName() { return fullName; }
+        public void setFullName(String fullName) { this.fullName = fullName; }
+
+        public String getTaxId() { return taxId; }
+        public void setTaxId(String taxId) { this.taxId = taxId; }
+
+        public BigDecimal getBaseHourlyRate() { return baseHourlyRate; }
+        public void setBaseHourlyRate(BigDecimal baseHourlyRate) { this.baseHourlyRate = baseHourlyRate; }
+
+        public int getHoursWorked() { return hoursWorked; }
+        public void setHoursWorked(int hoursWorked) { this.hoursWorked = hoursWorked; }
+
+        public BigDecimal getBonusAmount() { return bonusAmount; }
+        public void setBonusAmount(BigDecimal bonusAmount) { this.bonusAmount = bonusAmount; }
+
+        public String getBankCardNumber() { return bankCardNumber; }
+        public void setBankCardNumber(String bankCardNumber) { this.bankCardNumber = bankCardNumber; }
+    }
+
+    public class PayrollProcessor {
+        public void calculateAndProcessSalary(EmployeePayrollData emp) {
+            // 1. Перевірка вихідних бухгалтерських даних
+            if (emp == null) {
+                throw new IllegalArgumentException("Об'єкт emp не може бути null.");
+            }
+
+            if (emp.getTaxId() == null || emp.getTaxId().isBlank() || emp.getTaxId().length() != 10) {
+                throw new IllegalArgumentException("Некоректний податковий номер (РНОКПП) співробітника.");
+            }
+
+            if (emp.getHoursWorked() < 0 || emp.getHoursWorked() > 350) {
+                throw new IllegalArgumentException("Недопустима кількість відпрацьованих годин за місяць.");
+            }
+
+            // 2. Фінансові розрахунки (Нараховано, Податки, До виплати)
+            BigDecimal baseSalary = emp.getBaseHourlyRate().multiply(BigDecimal.valueOf(emp.getHoursWorked()));
+            BigDecimal grossSalary = baseSalary.add(emp.getBonusAmount());
+
+            // Податки: ПДФО 18%, Військовий збір 1.5%
+            BigDecimal pitTax = grossSalary.multiply(new BigDecimal("0.18"));
+            BigDecimal militaryTax = grossSalary.multiply(new BigDecimal("0.015"));
+            BigDecimal totalTaxes = pitTax.add(militaryTax);
+
+            BigDecimal netSalary = grossSalary.subtract(totalTaxes);
+
+            // 3. Формування розрахункового листка
+            String paySlip = String.format(
+                    "--------------------------------------------------%n" +
+                    "РОЗРАХУНКОВИЙ ЛИСТОК ЗА МІСЯЦЬ%n" +
+                    "Співробітник: %s (ІПН: %s)%n" +
+                    "Відпрацьовано годин: %d год%n" +
+                    "--------------------------------------------------%n" +
+                    "Нараховано (Gross): %.2f грн%n" +
+                    "- Основна оплата: %.2f грн%n" +
+                    "- Премія: %.2f грн%n" +
+                    "Утримано податків: %.2f грн%n" +
+                    "- ПДФО (18%%): %.2f грн%n" +
+                    "- Військовий збір (1.5%%): %.2f грн%n" +
+                    "--------------------------------------------------%n" +
+                    "ДО ВИПЛАТИ (Net): %.2f грн%n" +
+                    "--------------------------------------------------",
+                    emp.getFullName(), emp.getTaxId(),
+                    emp.getHoursWorked(),
+                    grossSalary, baseSalary, emp.getBonusAmount(),
+                    totalTaxes, pitTax, militaryTax,
+                    netSalary
+            );
+
+            // 4. Експорт у файл реєстру виплат для банку
+            String monthYear = LocalDate.now().format(DateTimeFormatter.ofPattern("MM_yyyy"));
+            String bankRegistryRow = String.format("%s;%s;%.2f;UAH;Salary_%s%n", emp.getTaxId(), emp.getBankCardNumber(), netSalary, monthYear);
+            try (FileOutputStream fos = new FileOutputStream("bank_payout_registry.csv", true)) {
+                fos.write(bankRegistryRow.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                System.err.println("Помилка запису банківського реєстру: " + e.getMessage());
+            }
+
+            // 5. Логування операції у системний журнал аудиту
+            String logEntry = String.format("[%s] Audit Payroll: EmpID=%s, Gross=%.2f, Net=%.2f, Taxes=%.2f%n",
+                    Instant.now().toString(), emp.getEmployeeId(), grossSalary, netSalary, totalTaxes);
+            try (FileWriter writer = new FileWriter("payroll_audit.log", true)) {
+                writer.write(logEntry);
+            } catch (IOException e) {
+                System.err.println("Помилка логування аудиту: " + e.getMessage());
+            }
+
+            System.out.println(paySlip);
+        }
+    }
+]]>
+    </variant>
+
+    <variant number="6">
+    <![CDATA[
+    package variant6_libraryloanmanager;
+
+    import java.io.FileWriter;
+    import java.io.IOException;
+    import java.math.BigDecimal;
+    import java.time.LocalDate;
+    import java.time.format.DateTimeFormatter;
+    import java.time.temporal.ChronoUnit;
+
+    // Опис предметної області: Автоматизована система міської бібліотеки.
+    // Завдання коду: Обробка повернення та видачі книг — перевірка читацького квитка, розрахунок пені за прострочення та накопичувальних балів читача, формування нагадування або чека штрафу, оновлення статусу книги в каталозі та надсилання сповіщення боржнику електронною поштою.
+
+    public class BookReturnModel {
+        private String readerTicketNumber;
+        private String readerName;
+        private String readerEmail;
+        private String bookIsbn;
+        private String bookTitle;
+        private LocalDate expectedReturnDate;
+        private LocalDate actualReturnDate;
+
+        public String getReaderTicketNumber() { return readerTicketNumber; }
+        public void setReaderTicketNumber(String readerTicketNumber) { this.readerTicketNumber = readerTicketNumber; }
+
+        public String getReaderName() { return readerName; }
+        public void setReaderName(String readerName) { this.readerName = readerName; }
+
+        public String getReaderEmail() { return readerEmail; }
+        public void setReaderEmail(String readerEmail) { this.readerEmail = readerEmail; }
+
+        public String getBookIsbn() { return bookIsbn; }
+        public void setBookIsbn(String bookIsbn) { this.bookIsbn = bookIsbn; }
+
+        public String getBookTitle() { return bookTitle; }
+        public void setBookTitle(String bookTitle) { this.bookTitle = bookTitle; }
+
+        public LocalDate getExpectedReturnDate() { return expectedReturnDate; }
+        public void setExpectedReturnDate(LocalDate expectedReturnDate) { this.expectedReturnDate = expectedReturnDate; }
+
+        public LocalDate getActualReturnDate() { return actualReturnDate; }
+        public void setActualReturnDate(LocalDate actualReturnDate) { this.actualReturnDate = actualReturnDate; }
+    }
+
+    public class LibraryLoanService {
+        public void processBookReturn(BookReturnModel loan) {
+            // 1. Перевірка даних читацького квитка та видачі
+            if (loan.getReaderTicketNumber() == null || loan.getReaderTicketNumber().isBlank()) {
+                throw new IllegalArgumentException("Номер читацького квитка відсутній.");
+            }
+
+            if (loan.getBookIsbn() == null || loan.getBookIsbn().isBlank()) {
+                throw new IllegalArgumentException("Код ISBN книги обов'язковий.");
+            }
+
+            if (loan.getActualReturnDate().isBefore(loan.getExpectedReturnDate().minusYears(1))) {
+                throw new IllegalStateException("Неможлива дата повернення книги.");
+            }
+
+            // 2. Розрахунок прострочення, штрафних санкцій та бонусних балів
+            long overdueDays = ChronoUnit.DAYS.between(loan.getExpectedReturnDate(), loan.getActualReturnDate());
+            BigDecimal fineAmount = BigDecimal.ZERO;
+            int loyaltyPointsEarned = 0;
+
+            if (overdueDays > 0) {
+                // Тариф штрафу: 15 грн за кожен день прострочення
+                fineAmount = BigDecimal.valueOf(overdueDays).multiply(new BigDecimal("15.00"));
+            } else {
+                // Бонус за вчасне повернення
+                loyaltyPointsEarned = 10;
+            }
+
+            DateTimeFormatter dmf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+            // 3. Генерація чека / офіційного повідомлення бібліотеки
+            StringBuilder noticeText = new StringBuilder("БІБЛІОТЕЧНИЙ АКТ ПОВЕРНЕННЯ КНИГИ\n");
+            noticeText.append("Читач: ").append(loan.getReaderName()).append(" (Квиток №").append(loan.getReaderTicketNumber()).append(")\n");
+            noticeText.append("Книга: \"").append(loan.getBookTitle()).append("\" (ISBN: ").append(loan.getBookIsbn()).append(")\n");
+            noticeText.append("Планова дата: ").append(loan.getExpectedReturnDate().format(dmf))
+                      .append(" | Фактична: ").append(loan.getActualReturnDate().format(dmf)).append("\n");
+
+            if (overdueDays > 0) {
+                noticeText.append(String.format("УВАГА! Прострочення: %d днів. Штраф до сплати: %.2f грн.%n", overdueDays, fineAmount));
+            } else {
+                noticeText.append("Дякуємо за вчасне повернення! Нараховано бонусних балів: ").append(loyaltyPointsEarned).append("\n");
+            }
+
+            // 4. Оновлення електронного каталогу (запис у файлову БД)
+            String catalogRecord = String.format("%s|RETURNED|%s|By_%s%n",
+                    loan.getBookIsbn(),
+                    loan.getActualReturnDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                    loan.getReaderTicketNumber());
+            try (FileWriter writer = new FileWriter("library_catalog_history.txt", true)) {
+                writer.write(catalogRecord);
+            } catch (IOException e) {
+                System.err.println("Помилка оновлення каталогу: " + e.getMessage());
+            }
+
+            // 5. Відправка квитанції читачеві
+            try {
+                String subject = overdueDays > 0 ? "Повідомлення про штраф за прострочення книги" : "Підтвердження повернення книги";
+                System.out.println("Надсилання пошти на " + loan.getReaderEmail() + " через smtp.citylibrary.local");
+                System.out.println("Тема: " + subject);
+                System.out.println("Текст: " + noticeText.toString());
+            } catch (Exception ex) {
+                System.out.println("Не вдалося відправити квитанцію на пошту: " + ex.getMessage());
+            }
+        }
+    }
+]]>
+    </variant>
+
+    <variant number="7">
+    <![CDATA[
+    package variant7_fitnesstracker;
+
+    import java.io.FileWriter;
+    import java.io.IOException;
+    import java.time.Instant;
+    import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
+
+    // Опис предметної області: Мобільний додаток для фітнесу та спортивних тренувань.
+    // Завдання коду: Обробка даних забігу/тренування — валідація показань датчиків, розрахунок спалених калорій, середнього темпу та пульсових зон, формування підсумкового звіту активності у форматі JSON, збереження тренування у файл локальної бази та відправка пуш-сповіщення у мобільний профіль користувача.
+
+    public class WorkoutSessionData {
+        private String userId;
+        private String deviceToken;
+        private double distanceKm;
+        private int durationMinutes;
+        private int averageHeartRate;
+        private double userWeightKg;
+
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+
+        public String getDeviceToken() { return deviceToken; }
+        public void setDeviceToken(String deviceToken) { this.deviceToken = deviceToken; }
+
+        public double getDistanceKm() { return distanceKm; }
+        public void setDistanceKm(double distanceKm) { this.distanceKm = distanceKm; }
+
+        public int getDurationMinutes() { return durationMinutes; }
+        public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
+
+        public int getAverageHeartRate() { return averageHeartRate; }
+        public void setAverageHeartRate(int averageHeartRate) { this.averageHeartRate = averageHeartRate; }
+
+        public double getUserWeightKg() { return userWeightKg; }
+        public void setUserWeightKg(double userWeightKg) { this.userWeightKg = userWeightKg; }
+    }
+
+    public class FitnessActivityManager {
+        public void processWorkoutSession(WorkoutSessionData session) {
+            // 1. Валідація даних телеметрії тренування
+            if (session == null) {
+                throw new IllegalArgumentException("Параметр session не може бути null.");
+            }
+
+            if (session.getDistanceKm() <= 0 || session.getDistanceKm() > 300) {
+                throw new IllegalArgumentException("Некоректна дистанція забігу.");
+            }
+
+            if (session.getDurationMinutes() <= 0 || session.getDurationMinutes() > 1440) {
+                throw new IllegalArgumentException("Некоректна тривалість тренування.");
+            }
+
+            if (session.getAverageHeartRate() < 40 || session.getAverageHeartRate() > 230) {
+                throw new IllegalArgumentException("Пульс виходить за межі безпечних фізіологічних показників.");
+            }
+
+            // 2. Алгоритми розрахунку темпу, калорій та пульсової зони
+            double paceMinutesPerKm = session.getDurationMinutes() / session.getDistanceKm();
+
+            // Спрощена формула розрахунку калорій для бігу (MET ~ 9.8)
+            double durationHours = session.getDurationMinutes() / 60.0;
+            double caloriesBurned = 9.8 * session.getUserWeightKg() * durationHours;
+
+            String heartRateZone;
+            if (session.getAverageHeartRate() >= 160) {
+                heartRateZone = "Анаеробна / Анаеробний поріг";
+            } else if (session.getAverageHeartRate() >= 130) {
+                heartRateZone = "Аеробна / Спалювання жиру";
+            } else {
+                heartRateZone = "Розминка / Легка активність";
+            }
+
+            int paceMinutes = (int) Math.floor(paceMinutesPerKm);
+            int paceSeconds = (int) Math.round((paceMinutesPerKm - paceMinutes) * 60);
+
+            // 3. Формування підсумкового JSON-об'єкта для аналітики
+            String jsonOutput = String.format("{\n" +
+                    "  \"UserId\": \"%s\",\n" +
+                    "  \"DistanceKm\": %.2f,\n" +
+                    "  \"Pace\": \"%d:%02d хв/км\",\n" +
+                    "  \"Calories\": %.0f,\n" +
+                    "  \"IntensityZone\": \"%s\",\n" +
+                    "  \"Timestamp\": \"%s\"\n" +
+                    "}",
+                    session.getUserId(),
+                    session.getDistanceKm(),
+                    paceMinutes, paceSeconds,
+                    caloriesBurned,
+                    heartRateZone,
+                    Instant.now().toString()
+            );
+
+            // 4. Збереження у локальне сховище тренувань
+            String timestampStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String userStoragePath = String.format("workout_%s_%s.json", session.getUserId(), timestampStr);
+            try (FileWriter writer = new FileWriter(userStoragePath)) {
+                writer.write(jsonOutput);
+            } catch (IOException e) {
+                System.err.println("Помилка збереження JSON тренування: " + e.getMessage());
+            }
+
+            // 5. Відправка Push-сповіщення на смартфон користувача
+            try {
+                String pushPayload = String.format("{\"to\": \"%s\", \"title\": \"Чудове тренування!\", \"body\": \"Ви подолали %.1f км та спалили %.0f ккал!\"}",
+                        session.getDeviceToken(), session.getDistanceKm(), caloriesBurned);
+                System.out.println("Надсилання Push-сповіщення через http://push-gateway.local/send");
+                System.out.println("Payload: " + pushPayload);
+            } catch (Exception ex) {
+                System.out.println("Помилка надсилання Push-сповіщення: " + ex.getMessage());
+            }
+        }
+    }
+]]>
+    </variant>
+
+    <variant number="8">
+    <![CDATA[
+    package variant8_utilitybilling;
+
+    import java.io.FileOutputStream;
+    import java.io.IOException;
+    import java.math.BigDecimal;
+    import java.nio.charset.StandardCharsets;
+    import java.time.LocalDate;
+    import java.time.format.DateTimeFormatter;
+
+    // Опис предметної області: Муніципальна служба розрахунку комунальних послуг.
+    // Завдання коду: Обробка показників лічильників та розрахунок квартплати — перевірка даних лічильника, обчислення вартості електроенергії/газу за диференційованими тарифами з урахуванням пільг та субсидій, генерація квитанції у текстовому форматі, збереження рахунку в реєстр платіжної системи та надсилання SMS-посилання на оплату.
+
+    public class UtilityAccountData {
+        private String accountNumber;
+        private String ownerName;
+        private String ownerPhone;
+        private int previousElectricityMeterReading;
+        private int currentElectricityMeterReading;
+        private boolean hasSubsidy;
+        private BigDecimal subsidyDiscountPercent;
+
+        public String getAccountNumber() { return accountNumber; }
+        public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+
+        public String getOwnerName() { return ownerName; }
+        public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
+
+        public String getOwnerPhone() { return ownerPhone; }
+        public void setOwnerPhone(String ownerPhone) { this.ownerPhone = ownerPhone; }
+
+        public int getPreviousElectricityMeterReading() { return previousElectricityMeterReading; }
+        public void setPreviousElectricityMeterReading(int previousElectricityMeterReading) { this.previousElectricityMeterReading = previousElectricityMeterReading; }
+
+        public int getCurrentElectricityMeterReading() { return currentElectricityMeterReading; }
+        public void setCurrentElectricityMeterReading(int currentElectricityMeterReading) { this.currentElectricityMeterReading = currentElectricityMeterReading; }
+
+        public boolean isHasSubsidy() { return hasSubsidy; }
+        public void setHasSubsidy(boolean hasSubsidy) { this.hasSubsidy = hasSubsidy; }
+
+        public BigDecimal getSubsidyDiscountPercent() { return subsidyDiscountPercent; }
+        public void setSubsidyDiscountPercent(BigDecimal subsidyDiscountPercent) { this.subsidyDiscountPercent = subsidyDiscountPercent; }
+    }
+
+    public class UtilityBillCalculator {
+        public void processMonthlyBill(UtilityAccountData account) {
+            // 1. Валідація показників приладів обліку
+            if (account.getAccountNumber() == null || account.getAccountNumber().isBlank()) {
+                throw new IllegalArgumentException("Номер особового рахунку обов'язковий.");
+            }
+
+            if (account.getCurrentElectricityMeterReading() < account.getPreviousElectricityMeterReading()) {
+                throw new IllegalStateException("Поточні показники лічильника не можуть бути меншими за попередні.");
+            }
+
+            int consumptionKwh = account.getCurrentElectricityMeterReading() - account.getPreviousElectricityMeterReading();
+
+            if (consumptionKwh > 5000) {
+                throw new IllegalArgumentException("Аномально високе споживання електроенергії. Потрібна перевірка інспектора.");
+            }
+
+            // 2. Розрахунок за диференційованим тарифом та обчислення субсидії
+            BigDecimal cost;
+            if (consumptionKwh <= 100) {
+                cost = BigDecimal.valueOf(consumptionKwh).multiply(new BigDecimal("2.64"));
+            } else {
+                BigDecimal first100 = new BigDecimal("100").multiply(new BigDecimal("2.64"));
+                BigDecimal remainder = BigDecimal.valueOf(consumptionKwh - 100).multiply(new BigDecimal("4.32"));
+                cost = first100.add(remainder);
+            }
+
+            BigDecimal subsidyDeduction = BigDecimal.ZERO;
+            if (account.isHasSubsidy() && account.getSubsidyDiscountPercent() != null && account.getSubsidyDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal discountFraction = account.getSubsidyDiscountPercent().divide(new BigDecimal("100.0"));
+                subsidyDeduction = cost.multiply(discountFraction);
+            }
+
+            BigDecimal totalToPay = cost.subtract(subsidyDeduction);
+
+            // 3. Генерація офіційної платіжної квитанції
+            StringBuilder billInvoice = new StringBuilder();
+            billInvoice.append("==================================================\n");
+            billInvoice.append("КВИТАНЦІЯ ПРО ОПЛАТУ КОМУНАЛЬНИХ ПОСЛУГ\n");
+            billInvoice.append(String.format("Особовий рахунок: %s | ПІБ: %s%n", account.getAccountNumber(), account.getOwnerName()));
+            billInvoice.append(String.format("Спожито електроенергії: %d кВт*год%n", consumptionKwh));
+            billInvoice.append(String.format("Нараховано за тарифом: %.2f грн%n", cost));
+            if (account.isHasSubsidy()) {
+                billInvoice.append(String.format("Субсидія/Пільга (%s%%): -%.2f грн%n", account.getSubsidyDiscountPercent(), subsidyDeduction));
+            }
+            billInvoice.append(String.format("ДО СПЛАТИ: %.2f грн%n", totalToPay));
+            billInvoice.append("==================================================\n");
+
+            // 4. Збереження у базі платіжного реєстру
+            String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String logLine = String.format("%s;%d;%.2f;%s%n", account.getAccountNumber(), consumptionKwh, totalToPay, dateStr);
+            try (FileOutputStream fos = new FileOutputStream("utility_payments_db.csv", true)) {
+                fos.write(logLine.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                System.err.println("Помилка збереження квитанції: " + e.getMessage());
+            }
+
+            // 5. Відправка SMS з посиланням на онлайн-оплату
+            try {
+                String paymentUrl = String.format("http://pay.utility.local/bill?acc=%s&sum=%.2f", account.getAccountNumber(), totalToPay);
+                String smsContent = String.format("Рахунок за комунальні послуги: %.2f грн. Оплата онлайн: %s", totalToPay, paymentUrl);
+
+                System.out.println("Надсилання SMS на " + account.getOwnerPhone() + " через http://sms-gateway.local/send");
+                System.out.println("Текст: " + smsContent);
+            } catch (Exception ex) {
+                System.out.println("Помилка відправки SMS-посилання: " + ex.getMessage());
+            }
+        }
+    }
+]]>
+    </variant>
+</variants>

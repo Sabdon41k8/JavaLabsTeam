@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<variants>
+  <variant number="1">
+<![CDATA[package variant1_orderfulfillment;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+// Опис предметної області: Система виконання та обробки замовлень e-commerce.
+// Завдання коду: Прийом замовлення, перевірка залишків, фіксація транзакції у базі даних, формування локального аудит-логу та відправка підтвердження покупцю.
+
+public class Variant1_OrderFulfillment {
+
+    public static class Order {
+        private String orderId;
+        private String customerEmail;
+        private double totalAmount;
+        private List<String> items = new ArrayList<>();
+
+        public String getOrderId() { return orderId; }
+        public void setOrderId(String orderId) { this.orderId = orderId; }
+        public String getCustomerEmail() { return customerEmail; }
+        public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+        public double getTotalAmount() { return totalAmount; }
+        public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
+        public List<String> getItems() { return items; }
+        public void setItems(List<String> items) { this.items = items; }
+    }
+
+    public static class MySqlDatabaseRepository {
+        public void saveOrder(Order order) {
+            System.out.println("[MySQL DB] Замовлення " + order.getOrderId() + " на суму " + order.getTotalAmount() + " грн збережено в таблицю 'orders'.");
+        }
+    }
+
+    public static class SmtpEmailService {
+        public void sendOrderConfirmation(String email, String orderId) {
+            System.out.println("[SMTP Email] Лист з підтвердженням замовлення " + orderId + " надіслано на " + email + ".");
+        }
+    }
+
+    public static class FileAuditLogger {
+        public void logTransaction(String message) {
+            String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            System.out.println("[File Logger] Запис до файлу audit.log: " + time + " - " + message);
+        }
+    }
+
+    public static class OrderFulfillmentService {
+        private MySqlDatabaseRepository databaseRepository;
+        private SmtpEmailService emailService;
+        private FileAuditLogger fileLogger;
+
+        public OrderFulfillmentService() {
+            this.databaseRepository = new MySqlDatabaseRepository();
+            this.emailService = new SmtpEmailService();
+            this.fileLogger = new FileAuditLogger();
+        }
+
+        public void processOrder(Order order) {
+            if (order == null || order.getItems().isEmpty()) {
+                throw new IllegalArgumentException("Замовлення не може бути порожнім.");
+            }
+
+            this.databaseRepository.saveOrder(order);
+            this.fileLogger.logTransaction("Успішно оброблено замовлення " + order.getOrderId());
+            this.emailService.sendOrderConfirmation(order.getCustomerEmail(), order.getOrderId());
+        }
+    }
+}
+]]>
+  </variant>
+  <variant number="2">
+<![CDATA[package variant2_userprofilemanager;
+
+// Опис предметної області: Сервіс управління профілями користувачів у веб-платформі.
+// Завдання коду: Оновлення даних профілю користувача, скидання оперативної пам'яті кешу, збереження змін у СУБД та надсилання повідомлення про безпеку.
+
+public class Variant2_UserProfileManager {
+
+    public static class UserProfile {
+        private String userId;
+        private String username;
+        private String email;
+        private String phone;
+
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPhone() { return phone; }
+        public void setPhone(String phone) { this.phone = phone; }
+    }
+
+    public static class RedisCacheService {
+        public void invalidateCache(String key) {
+            System.out.println("[Redis Cache] Видалено кеш за ключем: user:cache:" + key);
+        }
+    }
+
+    public static class PostgresUserRepository {
+        public void updateUser(UserProfile profile) {
+            System.out.println("[PostgreSQL DB] Оновлено профіль користувача " + profile.getUserId() + " (" + profile.getUsername() + ") у БД.");
+        }
+    }
+
+    public static class SendGridNotificationClient {
+        public void sendSecurityAlert(String email, String message) {
+            System.out.println("[SendGrid API] Сповіщення безпеки надіслано на " + email + ": " + message);
+        }
+    }
+
+    public static class UserProfileManager {
+        private RedisCacheService cacheService;
+        private PostgresUserRepository userRepository;
+        private SendGridNotificationClient notificationClient;
+
+        public UserProfileManager() {
+            this.cacheService = new RedisCacheService();
+            this.userRepository = new PostgresUserRepository();
+            this.notificationClient = new SendGridNotificationClient();
+        }
+
+        public void updateProfile(UserProfile profile) {
+            if (profile == null || profile.getUserId() == null || profile.getUserId().isEmpty()) {
+                throw new IllegalArgumentException("Некоректний профіль користувача.");
+            }
+
+            this.userRepository.updateUser(profile);
+            this.cacheService.invalidateCache(profile.getUserId());
+            this.notificationClient.sendSecurityAlert(profile.getEmail(), "Дані вашого профілю були успішно оновлені.");
+        }
+    }
+}
+]]>
+  </variant>
+  <variant number="3">
+<![CDATA[package variant3_financialtransactionprocessor;
+
+// Опис предметної області: Еквайринг та фінансовий процесінг онлайн-платежів.
+// Завдання коду: Проведення безготівкового платежу через зовнішній платіжний шлюз, фіксація фінансової операції у бухгалтерському реєстрі та SMS-інформування платника.
+
+public class Variant3_FinancialTransactionProcessor {
+
+    public static class PaymentRequest {
+        private String transactionId;
+        private String cardNumber;
+        private double amount;
+        private String payerPhone;
+
+        public String getTransactionId() { return transactionId; }
+        public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
+        public String getCardNumber() { return cardNumber; }
+        public void setCardNumber(String cardNumber) { this.cardNumber = cardNumber; }
+        public double getAmount() { return amount; }
+        public void setAmount(double amount) { this.amount = amount; }
+        public String getPayerPhone() { return payerPhone; }
+        public void setPayerPhone(String payerPhone) { this.payerPhone = payerPhone; }
+    }
+
+    public static class StripePaymentGatewayClient {
+        public boolean executeCharge(String cardNumber, double amount) {
+            System.out.println("[Stripe API] Виконано списання " + amount + " UAH з картки " + cardNumber + ".");
+            return true;
+        }
+    }
+
+    public static class SqlServerTransactionLedger {
+        public void recordTransaction(String transactionId, double amount, String status) {
+            System.out.println("[SQL Server Ledger] Записано транзакцію " + transactionId + ": сума=" + amount + ", статус=" + status + ".");
+        }
+    }
+
+    public static class TwilioSmsNotifier {
+        public void sendSmsReceipt(String phone, String transactionId, double amount) {
+            System.out.println("[Twilio SMS] Повідомлення на " + phone + ": Платіж " + transactionId + " на суму " + amount + " UAH успішно виконано.");
+        }
+    }
+
+    public static class FinancialTransactionProcessor {
+        private StripePaymentGatewayClient stripeClient;
+        private SqlServerTransactionLedger ledger;
+        private TwilioSmsNotifier smsNotifier;
+
+        public FinancialTransactionProcessor() {
+            this.stripeClient = new StripePaymentGatewayClient();
+            this.ledger = new SqlServerTransactionLedger();
+            this.smsNotifier = new TwilioSmsNotifier();
+        }
+
+        public void processPayment(PaymentRequest request) {
+            if (request == null || request.getAmount() <= 0) {
+                throw new IllegalArgumentException("Сума транзакції повинна бути більшою за нуль.");
+            }
+
+            boolean success = this.stripeClient.executeCharge(request.getCardNumber(), request.getAmount());
+            String status = success ? "SUCCESS" : "FAILED";
+
+            this.ledger.recordTransaction(request.getTransactionId(), request.getAmount(), status);
+            this.smsNotifier.sendSmsReceipt(request.getPayerPhone(), request.getTransactionId(), request.getAmount());
+        }
+    }
+}
+]]>
+  </variant>
+  <variant number="4">
+<![CDATA[package variant4_patientmedicalrecordservice;
+
+// Опис предметної області: Медична інформаційна система (МІС) госпіталю.
+// Завдання коду: Реєстрація первинного огляду пацієнта, шифрування та збереження медичної картки у локальний архів, внесення запису в БД Oracle та публікація події в шину госпіталю.
+
+public class Variant4_PatientMedicalRecordService {
+
+    public static class MedicalRecord {
+        private String recordId;
+        private String patientId;
+        private String diagnosis;
+        private String doctorNotes;
+
+        public String getRecordId() { return recordId; }
+        public void setRecordId(String recordId) { this.recordId = recordId; }
+        public String getPatientId() { return patientId; }
+        public void setPatientId(String patientId) { this.patientId = patientId; }
+        public String getDiagnosis() { return diagnosis; }
+        public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
+        public String getDoctorNotes() { return doctorNotes; }
+        public void setDoctorNotes(String doctorNotes) { this.doctorNotes = doctorNotes; }
+    }
+
+    public static class EncryptedLocalFileStorage {
+        public void saveEncryptedRecord(String recordId, String data) {
+            System.out.println("[Encrypted File Storage] Картку " + recordId + " зашифровано AES-256 та збережено у локальне сховище.");
+        }
+    }
+
+    public static class OracleHealthDatabase {
+        public void insertRecord(MedicalRecord record) {
+            System.out.println("[Oracle Health DB] Запис " + record.getRecordId() + " для пацієнта " + record.getPatientId() + " успішно збережено в таблицю 'PATIENT_RECORDS'.");
+        }
+    }
+
+    public static class HospitalEventBusPublisher {
+        public void publishMedicalEvent(String eventType, String recordId) {
+            System.out.println("[Hospital EventBus] Опубліковано подію '" + eventType + "' для медичного запису " + recordId + ".");
+        }
+    }
+
+    public static class PatientMedicalRecordService {
+        private EncryptedLocalFileStorage fileStorage;
+        private OracleHealthDatabase oracleDatabase;
+        private HospitalEventBusPublisher eventBusPublisher;
+
+        public PatientMedicalRecordService() {
+            this.fileStorage = new EncryptedLocalFileStorage();
+            this.oracleDatabase = new OracleHealthDatabase();
+            this.eventBusPublisher = new HospitalEventBusPublisher();
+        }
+
+        public void savePatientRecord(MedicalRecord record) {
+            if (record == null || record.getPatientId() == null || record.getPatientId().isEmpty()) {
+                throw new IllegalArgumentException("Некоректний медичний запис пацієнта.");
+            }
+
+            this.oracleDatabase.insertRecord(record);
+            this.fileStorage.saveEncryptedRecord(record.getRecordId(), record.getDiagnosis());
+            this.eventBusPublisher.publishMedicalEvent("PATIENT_DIAGNOSIS_UPDATED", record.getRecordId());
+        }
+    }
+}
+]]>
+  </variant>
+  <variant number="5">
+<![CDATA[package variant5_inventorystockmanager;
+
+// Опис предметної області: Складський комплекс та автоматизована система управління товарними запасами.
+// Завдання коду: Коригування залишків товарів на складі, оновлення бази даних MongoDB, надсилання сигналу радіо-маячкам фізичних стелажів та фіксація структурованого JSON-логу.
+
+public class Variant5_InventoryStockManager {
+
+    public static class StockAdjustment {
+        private String itemSku;
+        private String warehouseZone;
+        private int quantityDelta;
+
+        public String getItemSku() { return itemSku; }
+        public void setItemSku(String itemSku) { this.itemSku = itemSku; }
+        public String getWarehouseZone() { return warehouseZone; }
+        public void setWarehouseZone(String warehouseZone) { this.warehouseZone = warehouseZone; }
+        public int getQuantityDelta() { return quantityDelta; }
+        public void setQuantityDelta(int quantityDelta) { this.quantityDelta = quantityDelta; }
+    }
+
+    public static class MongoInventoryRepository {
+        public void updateStock(String sku, int delta) {
+            System.out.println("[MongoDB Storage] Залишок для SKU '" + sku + "' змінено на " + delta + " шт.");
+        }
+    }
+
+    public static class MqttWarehouseBeaconClient {
+        public void signalShelfLight(String zone, String sku) {
+            System.out.println("[MQTT Protocol] Надіслано сигнал на радіо-маячок стелажа у зоні '" + zone + "' для SKU '" + sku + "'.");
+        }
+    }
+
+    public static class JsonFileReportLogger {
+        public void logStockEvent(String jsonMessage) {
+            System.out.println("[JSON File Logger] Додано лог-запис у stock_events.json: " + jsonMessage);
+        }
+    }
+
+    public static class InventoryStockManager {
+        private MongoInventoryRepository mongoRepository;
+        private MqttWarehouseBeaconClient beaconClient;
+        private JsonFileReportLogger jsonLogger;
+
+        public InventoryStockManager() {
+            this.mongoRepository = new MongoInventoryRepository();
+            this.beaconClient = new MqttWarehouseBeaconClient();
+            this.jsonLogger = new JsonFileReportLogger();
+        }
+
+        public void adjustStockLevel(StockAdjustment adjustment) {
+            if (adjustment == null || adjustment.getItemSku() == null || adjustment.getItemSku().isEmpty()) {
+                throw new IllegalArgumentException("Некоректні дані коригування товару.");
+            }
+
+            this.mongoRepository.updateStock(adjustment.getItemSku(), adjustment.getQuantityDelta());
+            this.beaconClient.signalShelfLight(adjustment.getWarehouseZone(), adjustment.getItemSku());
+            this.jsonLogger.logStockEvent("{"sku":"" + adjustment.getItemSku() + "", "delta":" + adjustment.getQuantityDelta() + "}");
+        }
+    }
+}
+]]>
+  </variant>
+  <variant number="6">
+<![CDATA[package variant6_documentapprovalworkflow;
+
+// Опис предметної області: Корпоративна система електронного документообігу та узгодження.
+// Завдання коду: Узгодження документа керівником, перевірка прав підписанта через Active Directory, оновлення пошукового індексу Elasticsearch та надсилання сповіщення у робочий чат Slack.
+
+public class Variant6_DocumentApprovalWorkflow {
+
+    public static class Document {
+        private String documentId;
+        private String title;
+        private String authorUsername;
+        private String approverUsername;
+
+        public String getDocumentId() { return documentId; }
+        public void setDocumentId(String documentId) { this.documentId = documentId; }
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+        public String getAuthorUsername() { return authorUsername; }
+        public void setAuthorUsername(String authorUsername) { this.authorUsername = authorUsername; }
+        public String getApproverUsername() { return approverUsername; }
+        public void setApproverUsername(String approverUsername) { this.approverUsername = approverUsername; }
+    }
+
+    public static class ElasticsearchDocumentIndex {
+        public void indexDocument(String docId, String title, String status) {
+            System.out.println("[Elasticsearch Index] Документ " + docId + " ('" + title + "') перевиндексовано зі статусом '" + status + "'.");
+        }
+    }
+
+    public static class ActiveDirectoryUserValidator {
+        public boolean validateUserSignature(String username) {
+            System.out.println("[Active Directory LDAP] Користувача '" + username + "' підтверджено у групі 'Managers'.");
+            return true;
+        }
+    }
+
+    public static class SlackWebhookNotifier {
+        public void postChannelMessage(String channel, String message) {
+            System.out.println("[Slack Webhook] Повідомлення у канал #" + channel + ": " + message);
+        }
+    }
+
+    public static class DocumentApprovalWorkflow {
+        private ElasticsearchDocumentIndex searchIndex;
+        private ActiveDirectoryUserValidator adValidator;
+        private SlackWebhookNotifier slackNotifier;
+
+        public DocumentApprovalWorkflow() {
+            this.searchIndex = new ElasticsearchDocumentIndex();
+            this.adValidator = new ActiveDirectoryUserValidator();
+            this.slackNotifier = new SlackWebhookNotifier();
+        }
+
+        public void approveDocument(Document doc) {
+            if (doc == null || doc.getDocumentId() == null || doc.getDocumentId().isEmpty()) {
+                throw new IllegalArgumentException("Некоректний документ для узгодження.");
+            }
+
+            boolean isValidApprover = this.adValidator.validateUserSignature(doc.getApproverUsername());
+            if (!isValidApprover) {
+                throw new IllegalStateException("Підписант не має повноважень для підпису.");
+            }
+
+            this.searchIndex.indexDocument(doc.getDocumentId(), doc.getTitle(), "APPROVED");
+            this.slackNotifier.postChannelMessage("approvals", "Документ '" + doc.getTitle() + "' (ID: " + doc.getDocumentId() + ") успішно підписано користувачем " + doc.getApproverUsername() + ".");
+        }
+    }
+}
+]]>
+  </variant>
+  <variant number="7">
+<![CDATA[package variant7_iottelemetryprocessor;
+
+// Опис предметної області: Моніторинг промислових IoT-пристроїв та обробка телеметрії.
+// Завдання коду: Обробка показників датчиків температури та тиску, збереження часових рядів у TimescaleDB, публікація критичного критичного сповіщення в Apache Kafka та аварійний локальний запис.
+
+public class Variant7_IoTTelemetryProcessor {
+
+    public static class TelemetryPacket {
+        private String deviceId;
+        private double temperature;
+        private double pressure;
+        private long timestamp;
+
+        public String getDeviceId() { return deviceId; }
+        public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
+        public double getTemperature() { return temperature; }
+        public void setTemperature(double temperature) { this.temperature = temperature; }
+        public double getPressure() { return pressure; }
+        public void setPressure(double pressure) { this.pressure = pressure; }
+        public long getTimestamp() { return timestamp; }
+        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    }
+
+    public static class TimescaleDbTelemetryRepository {
+        public void insertMetric(String deviceId, double temp, double press, long time) {
+            System.out.println("[TimescaleDB] Записано метрику для " + deviceId + ": Temp=" + temp + "°C, Press=" + press + "bar.");
+        }
+    }
+
+    public static class KafkaAlertPublisher {
+        public void sendEmergencyAlert(String topic, String payload) {
+            System.out.println("[Apache Kafka Broker] Опубліковано тривогу у топік '" + topic + "': " + payload);
+        }
+    }
+
+    public static class LocalDiskEmergencyWriter {
+        public void writeBackupLog(String data) {
+            System.out.println("[Emergency Disk Log] Локальний дублюючий запис телеметрії: " + data);
+        }
+    }
+
+    public static class IoTTelemetryProcessor {
+        private TimescaleDbTelemetryRepository timescaleRepository;
+        private KafkaAlertPublisher kafkaPublisher;
+        private LocalDiskEmergencyWriter emergencyWriter;
+
+        public IoTTelemetryProcessor() {
+            this.timescaleRepository = new TimescaleDbTelemetryRepository();
+            this.kafkaPublisher = new KafkaAlertPublisher();
+            this.emergencyWriter = new LocalDiskEmergencyWriter();
+        }
+
+        public void processTelemetry(TelemetryPacket packet) {
+            if (packet == null || packet.getDeviceId() == null || packet.getDeviceId().isEmpty()) {
+                throw new IllegalArgumentException("Некоректний пакет телеметрії.");
+            }
+
+            this.timescaleRepository.insertMetric(packet.getDeviceId(), packet.getTemperature(), packet.getPressure(), packet.getTimestamp());
+            this.emergencyWriter.writeBackupLog("DEV:" + packet.getDeviceId() + "|T:" + packet.getTemperature() + "|P:" + packet.getPressure());
+
+            if (packet.getTemperature() > 85.0 || packet.getPressure() > 10.0) {
+                this.kafkaPublisher.sendEmergencyAlert("iot-critical-alerts", "Критичний перегрів або тиск на пристрої " + packet.getDeviceId() + "!");
+            }
+        }
+    }
+}
+]]>
+  </variant>
+  <variant number="8">
+<![CDATA[package variant8_courseregistrationservice;
+
+// Опис предметної області: Університетська автоматизована система реєстрації на дисципліни.
+// Завдання коду: Реєстрація студента на навчальний курс, зменшення кількості вільних місць у БД MariaDB, формування PDF-квитанції про зарахування та надсилання інституційного email.
+
+public class Variant8_CourseRegistrationService {
+
+    public static class RegistrationRequest {
+        private String studentId;
+        private String studentEmail;
+        private String courseCode;
+
+        public String getStudentId() { return studentId; }
+        public void setStudentId(String studentId) { this.studentId = studentId; }
+        public String getStudentEmail() { return studentEmail; }
+        public void setStudentEmail(String studentEmail) { this.studentEmail = studentEmail; }
+        public String getCourseCode() { return courseCode; }
+        public void setCourseCode(String courseCode) { this.courseCode = courseCode; }
+    }
+
+    public static class MariadbCourseRepository {
+        public void bookCourseSeat(String courseCode, String studentId) {
+            System.out.println("[MariaDB Storage] Студента " + studentId + " зараховано на курс '" + courseCode + "'. Кількість місць зменшено.");
+        }
+    }
+
+    public static class PdfInvoiceGenerator {
+        public void generateRegistrationSlip(String studentId, String courseCode) {
+            System.out.println("[PDF Engine] Згенеровано PDF-повідомлення 'registration_" + studentId + "_" + courseCode + ".pdf'.");
+        }
+    }
+
+    public static class UniversityEmailGateway {
+        public void sendOfficialMail(String email, String subject, String body) {
+            System.out.println("[University Mail Gateway] Лист на " + email + " | Тема: '" + subject + "'.");
+        }
+    }
+
+    public static class CourseRegistrationService {
+        private MariadbCourseRepository courseRepository;
+        private PdfInvoiceGenerator pdfGenerator;
+        private UniversityEmailGateway emailGateway;
+
+        public CourseRegistrationService() {
+            this.courseRepository = new MariadbCourseRepository();
+            this.pdfGenerator = new PdfInvoiceGenerator();
+            this.emailGateway = new UniversityEmailGateway();
+        }
+
+        public void registerStudent(RegistrationRequest request) {
+            if (request == null || request.getStudentId() == null || request.getStudentId().isEmpty() || request.getCourseCode() == null || request.getCourseCode().isEmpty()) {
+                throw new IllegalArgumentException("Некоректна заявка на реєстрацію.");
+            }
+
+            this.courseRepository.bookCourseSeat(request.getCourseCode(), request.getStudentId());
+            this.pdfGenerator.generateRegistrationSlip(request.getStudentId(), request.getCourseCode());
+            this.emailGateway.sendOfficialMail(request.getStudentEmail(), "Підтвердження реєстрації на курс", "Вас успішно зараховано на курс " + request.getCourseCode() + ".");
+        }
+    }
+}
+]]>
+  </variant>
+</variants>

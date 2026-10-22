@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<variants>
+    <variant number="1">
+<![CDATA[
+package variant1_smarthomedevices;
+
+// Опис предметної області: Екосистема пристроїв розумного дому.
+// Завдання коду: Забезпечення єдиного програмного інтерфейсу для взаємодії з різними типами побутових розумних пристроїв.
+
+public class SmartHomeDevices {
+
+    public interface ISmartDevice {
+        void powerOn();
+        void powerOff();
+        void setTemperature(double temp);
+        void setBrightness(int level);
+        void brewCoffee();
+    }
+
+    public static class SmartThermostat implements ISmartDevice {
+        @Override public void powerOn() { System.out.println("Thermostat powered on."); }
+        @Override public void powerOff() { System.out.println("Thermostat powered off."); }
+        @Override public void setTemperature(double temp) { System.out.println("Temperature set to " + temp + "°C."); }
+
+        @Override public void setBrightness(int level) { throw new UnsupportedOperationException("Thermostat does not support lighting adjustment."); }
+        @Override public void brewCoffee() { throw new UnsupportedOperationException("Thermostat cannot brew coffee."); }
+    }
+
+    public static class SmartLight implements ISmartDevice {
+        @Override public void powerOn() { System.out.println("Light turned on."); }
+        @Override public void powerOff() { System.out.println("Light turned off."); }
+        @Override public void setBrightness(int level) { System.out.println("Brightness set to " + level + "%."); }
+
+        @Override public void setTemperature(double temp) { throw new UnsupportedOperationException("Light cannot set temperature."); }
+        @Override public void brewCoffee() { throw new UnsupportedOperationException("Light cannot brew coffee."); }
+    }
+
+    public static class SmartCoffeeMaker implements ISmartDevice {
+        @Override public void powerOn() { System.out.println("Coffee maker powered on."); }
+        @Override public void powerOff() { System.out.println("Coffee maker powered off."); }
+        @Override public void brewCoffee() { System.out.println("Brewing fresh coffee..."); }
+
+        @Override public void setTemperature(double temp) { throw new UnsupportedOperationException("Coffee maker controls temperature internally."); }
+        @Override public void setBrightness(int level) { throw new UnsupportedOperationException("Coffee maker has no dimmable lighting."); }
+    }
+}
+]]>
+    </variant>
+    <variant number="2">
+<![CDATA[
+package variant2_universalrepository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+// Опис предметної області: Корпоративний шар доступу до даних та аналітики.
+// Завдання коду: Обслуговування операцій зчитування, модифікації, імпорту, експорту та очищення баз даних.
+
+public class UniversalRepository {
+
+    public interface IUniversalDataRepository<T> {
+        List<T> getAll();
+        T getById(int id);
+        void add(T entity);
+        void update(T entity);
+        void delete(int id);
+        void bulkImport(List<T> entities);
+        void exportToCsv(String path);
+        void purgeAll();
+    }
+
+    public static class ReadOnlyAnalyticsRepository<T> implements IUniversalDataRepository<T> {
+        @Override public List<T> getAll() { return new ArrayList<>(); }
+        @Override public T getById(int id) { return null; }
+
+        @Override public void add(T entity) { throw new UnsupportedOperationException("ReadOnly repository does not allow modifications."); }
+        @Override public void update(T entity) { throw new UnsupportedOperationException("ReadOnly repository does not allow modifications."); }
+        @Override public void delete(T entity) { throw new UnsupportedOperationException("ReadOnly repository does not allow modifications."); }
+        @Override public void bulkImport(List<T> entities) { throw new UnsupportedOperationException("Bulk import is disabled for ReadOnly analytics."); }
+        @Override public void exportToCsv(String path) { System.out.println("Exported analytics to " + path); }
+        @Override public void purgeAll() { throw new UnsupportedOperationException("Purge operation is forbidden."); }
+    }
+
+    public static class CacheRepository<T> implements IUniversalDataRepository<T> {
+        @Override public List<T> getAll() { return new ArrayList<>(); }
+        @Override public T getById(int id) { return null; }
+        @Override public void add(T entity) { System.out.println("Added to cache."); }
+        @Override public void update(T entity) { System.out.println("Updated in cache."); }
+        @Override public void delete(int id) { System.out.println("Removed from cache."); }
+        @Override public void purgeAll() { System.out.println("Cache purged."); }
+
+        @Override public void bulkImport(List<T> entities) { throw new UnsupportedOperationException("Bulk import is not supported in RAM cache."); }
+        @Override public void exportToCsv(String path) { throw new UnsupportedOperationException("Cache repository cannot export files."); }
+    }
+}
+]]>
+    </variant>
+    <variant number="3">
+<![CDATA[
+package variant3_multifunctionprinter;
+
+// Опис предметної області: Офісна периферійна техніка та документообіг.
+// Завдання коду: Керування процесами друку, сканування, степлювання та відправки факсів через єдину систему управління.
+
+public class MultiFunctionPrinter {
+
+    public interface IMultiFunctionDevice {
+        void printDocument(String doc);
+        void scanDocument();
+        void sendFax(String number, String doc);
+        void staplePages(int count);
+        void duplexPrint(String doc);
+    }
+
+    public static class BasicLaserPrinter implements IMultiFunctionDevice {
+        @Override public void printDocument(String doc) { System.out.println("Printing: " + doc); }
+        @Override public void duplexPrint(String doc) { System.out.println("Duplex printing: " + doc); }
+
+        @Override public void scanDocument() { throw new UnsupportedOperationException("Basic laser printer has no scanner unit."); }
+        @Override public void sendFax(String number, String doc) { throw new UnsupportedOperationException("Basic printer cannot send faxes."); }
+        @Override public void staplePages(int count) { throw new UnsupportedOperationException("Basic printer has no stapler module."); }
+    }
+
+    public static class DocumentScanner implements IMultiFunctionDevice {
+        @Override public void scanDocument() { System.out.println("Scanning physical document..."); }
+
+        @Override public void printDocument(String doc) { throw new UnsupportedOperationException("Scanner cannot print documents."); }
+        @Override public void sendFax(String number, String doc) { throw new UnsupportedOperationException("Scanner cannot send faxes."); }
+        @Override public void staplePages(int count) { throw new UnsupportedOperationException("Scanner cannot staple pages."); }
+        @Override public void duplexPrint(String doc) { throw new UnsupportedOperationException("Scanner cannot print."); }
+    }
+}
+]]>
+    </variant>
+    <variant number="4">
+<![CDATA[
+package variant4_cloudstorageservice;
+
+// Опис предметної області: Сервіс хмарного збереження та розповсюдження файлів.
+// Завдання коду: Виконання операцій завантаження, вивантаження, генерації публічних посилань, архівування та монтування мережевих дисків.
+
+public class CloudStorageService {
+
+    public interface ICloudStorageProvider {
+        void uploadFile(String name, byte[] data);
+        byte[] downloadFile(String name);
+        void deleteFile(String name);
+        String generatePublicShareLink(String name);
+        void compressArchive(String folderPath);
+        void mountNetworkDrive(String driveLetter);
+    }
+
+    public static class ReadOnlyPublicCDNProvider implements ICloudStorageProvider {
+        @Override public byte[] downloadFile(String name) { return new byte[0]; }
+        @Override public String generatePublicShareLink(String name) { return "https://example.com/share/" + name; }
+
+        @Override public void uploadFile(String name, byte[] data) { throw new UnsupportedOperationException("Public CDN is read-only."); }
+        @Override public void deleteFile(String name) { throw new UnsupportedOperationException("Files cannot be deleted directly from public CDN."); }
+        @Override public void compressArchive(String folderPath) { throw new UnsupportedOperationException("CDN does not perform server-side compression."); }
+        @Override public void mountNetworkDrive(String driveLetter) { throw new UnsupportedOperationException("CDN cannot be mounted as a drive."); }
+    }
+
+    public static class LocalFileSyncProvider implements ICloudStorageProvider {
+        @Override public void uploadFile(String name, byte[] data) { System.out.println("Uploaded " + name + " to local disk."); }
+        @Override public byte[] downloadFile(String name) { return new byte[0]; }
+        @Override public void deleteFile(String name) { System.out.println("Deleted " + name + " from local disk."); }
+        @Override public void compressArchive(String folderPath) { System.out.println("Archived " + folderPath + "."); }
+
+        @Override public String generatePublicShareLink(String name) { throw new UnsupportedOperationException("Local sync does not generate public HTTP links."); }
+        @Override public void mountNetworkDrive(String driveLetter) { throw new UnsupportedOperationException("Local sync cannot mount remote drives."); }
+    }
+}
+]]>
+    </variant>
+    <variant number="5">
+<![CDATA[
+package variant5_vehiclecontrolsystem;
+
+// Опис предметної області: Автоматизована система управління автопарком та мультимодальним транспортом.
+// Завдання коду: Управління рухом, польотом, зануренням під воду та аварійними системами транспортних засобів.
+
+public class VehicleControlSystem {
+
+    public interface IVehicleController {
+        void startEngine();
+        void stopEngine();
+        void accelerate(double speed);
+        void flyToAltitude(double meters);
+        void submergeToDepth(double meters);
+    }
+
+    public static class CityCar implements IVehicleController {
+        @Override public void startEngine() { System.out.println("Car engine started."); }
+        @Override public void stopEngine() { System.out.println("Car engine stopped."); }
+        @Override public void accelerate(double speed) { System.out.println("Car accelerated to " + speed + " km/h."); }
+
+        @Override public void flyToAltitude(double meters) { throw new UnsupportedOperationException("Cars cannot fly."); }
+        @Override public void submergeToDepth(double meters) { throw new UnsupportedOperationException("Cars cannot submerge under water."); }
+    }
+
+    public static class CargoDrone implements IVehicleController {
+        @Override public void startEngine() { System.out.println("Drone rotors armed."); }
+        @Override public void stopEngine() { System.out.println("Drone rotors disarmed."); }
+        @Override public void accelerate(double speed) { System.out.println("Drone speed set to " + speed + " km/h."); }
+        @Override public void flyToAltitude(double meters) { System.out.println("Flying at " + meters + " meters altitude."); }
+
+        @Override public void submergeToDepth(double meters) { throw new UnsupportedOperationException("Drone is not waterproof."); }
+    }
+}
+]]>
+    </variant>
+    <variant number="6">
+<![CDATA[
+package variant6_ecommercepaymentterminal;
+
+import java.math.BigDecimal;
+
+// Опис предметної області: Програмно-апаратні платіжні термінали та касові системи.
+// Завдання коду: Проведення транзакцій картками, NFC, банківськими переказами, подарунковими сертифікатами та друк паперових чеків.
+
+public class ECommercePaymentTerminal {
+
+    public interface IPaymentTerminal {
+        void processCreditCard(BigDecimal amount, String cardNumber);
+        void processNfcTap(BigDecimal amount);
+        void processBankTransfer(BigDecimal amount, String iban);
+        void processGiftCard(BigDecimal amount, String voucherCode);
+        void printPaperReceipt(String text);
+    }
+
+    public static class OnlineWebCheckoutTerminal implements IPaymentTerminal {
+        @Override public void processCreditCard(BigDecimal amount, String cardNumber) { System.out.println("Web charged " + amount + " via card."); }
+        @Override public void processBankTransfer(BigDecimal amount, String iban) { System.out.println("Web charged " + amount + " via IBAN."); }
+
+        @Override public void processNfcTap(BigDecimal amount) { throw new UnsupportedOperationException("Web browser checkout cannot scan physical NFC cards."); }
+        @Override public void processGiftCard(BigDecimal amount, String voucherCode) { throw new UnsupportedOperationException("Gift cards not supported on web checkout."); }
+        @Override public void printPaperReceipt(String text) { throw new UnsupportedOperationException("Web checkout cannot print physical paper receipts."); }
+    }
+
+    public static class PosCardReader implements IPaymentTerminal {
+        @Override public void processCreditCard(BigDecimal amount, String cardNumber) { System.out.println("POS processed card " + amount + "."); }
+        @Override public void processNfcTap(BigDecimal amount) { System.out.println("POS read NFC tap " + amount + "."); }
+        @Override public void printPaperReceipt(String text) { System.out.println("Printed receipt: " + text); }
+
+        @Override public void processBankTransfer(BigDecimal amount, String iban) { throw new UnsupportedOperationException("POS terminal does not process wire transfers."); }
+        @Override public void processGiftCard(BigDecimal amount, String voucherCode) { throw new UnsupportedOperationException("Vouchers not processed by POS card reader."); }
+    }
+}
+]]>
+    </variant>
+    <variant number="7">
+<![CDATA[
+package variant7_useraccountmanagement;
+
+// Опис предметної області: Корпоративна система автентифікації та адміністрування користувачів.
+// Завдання коду: Реєстрація, автентифікація, скидання облікових даних, призначення адміністративних ролей, аудит логів та експорт даних за правилами GDPR.
+
+public class UserAccountManagement {
+
+    public interface IUserManagementService {
+        void registerUser(String userIdentifier, String secretKey);
+        boolean authenticate(String userIdentifier, String secretKey);
+        void resetSecret(String userIdentifier);
+        void assignRole(int userId, String role);
+        void auditUserLogs(int userId);
+        void exportUserDataGdpr(int userId);
+    }
+
+    public static class SelfServiceCustomerPortal implements IUserManagementService {
+        @Override public void registerUser(String userIdentifier, String secretKey) { System.out.println("User registered: " + userIdentifier); }
+        @Override public boolean authenticate(String userIdentifier, String secretKey) { return true; }
+        @Override public void resetSecret(String userIdentifier) { System.out.println("Secret reset sent for " + userIdentifier); }
+        @Override public void exportUserDataGdpr(int userId) { System.out.println("Exported GDPR archive for user " + userId); }
+
+        @Override public void assignRole(int userId, String role) { throw new UnsupportedOperationException("Customers cannot assign administrative roles."); }
+        @Override public void auditUserLogs(int userId) { throw new UnsupportedOperationException("Customers cannot access security audit logs."); }
+    }
+
+    public static class AuthGatewayService implements IUserManagementService {
+        @Override public boolean authenticate(String userIdentifier, String secretKey) { return true; }
+        @Override public void resetSecret(String userIdentifier) { System.out.println("Gateway secret reset for " + userIdentifier); }
+
+        @Override public void registerUser(String userIdentifier, String secretKey) { throw new UnsupportedOperationException("Auth gateway does not create new user profiles."); }
+        @Override public void assignRole(int userId, String role) { throw new UnsupportedOperationException("Auth gateway does not manage RBAC roles."); }
+        @Override public void auditUserLogs(int userId) { throw new UnsupportedOperationException("Auth gateway does not store detailed logs."); }
+        @Override public void exportUserDataGdpr(int userId) { throw new UnsupportedOperationException("Auth gateway cannot generate GDPR archives."); }
+    }
+}
+]]>
+    </variant>
+    <variant number="8">
+<![CDATA[
+package variant8_gamecharactersystem;
+
+// Опис предметної області: Рольова комп'ютерна гра (RPG) та ігрова механіка.
+// Завдання коду: Обслуговування дій ігрових сутностей — переміщення, виконання магічних дій, лікування, крафтинг та торгівля.
+
+public class GameCharacterSystem {
+
+    public interface IGameCharacter {
+        void move(int x, int y);
+        void castSpell(String spellName, int manaCost);
+        void castHeal(int hpAmount);
+        void craftItem(String recipe);
+        void tradeWithNpc(int npcId);
+    }
+
+    public static class MageCharacter implements IGameCharacter {
+        @Override public void move(int x, int y) { System.out.println("Mage moved to (" + x + ", " + y + ")."); }
+        @Override public void castSpell(String spellName, int manaCost) { System.out.println("Mage cast spell " + spellName + "."); }
+        @Override public void castHeal(int hpAmount) { System.out.println("Mage restored " + hpAmount + " HP."); }
+
+        @Override public void craftItem(String recipe) { throw new UnsupportedOperationException("Mage cannot craft physical items."); }
+        @Override public void tradeWithNpc(int npcId) { throw new UnsupportedOperationException("Mage is in battle mode."); }
+    }
+
+    public static class NpcVendor implements IGameCharacter {
+        @Override public void move(int x, int y) { System.out.println("Vendor walked to shop stall at (" + x + ", " + y + ")."); }
+        @Override public void tradeWithNpc(int npcId) { System.out.println("Vendor opened shop inventory for player."); }
+
+        @Override public void castSpell(String spellName, int manaCost) { throw new UnsupportedOperationException("Vendor NPC cannot cast spells."); }
+        @Override public void castHeal(int hpAmount) { throw new UnsupportedOperationException("Vendor NPC cannot heal entities."); }
+        @Override public void craftItem(String recipe) { throw new UnsupportedOperationException("Vendor NPC does not craft items on demand."); }
+    }
+}
+]]>
+    </variant>
+</variants>

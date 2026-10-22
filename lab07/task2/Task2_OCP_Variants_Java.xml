@@ -1,0 +1,701 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<variants>
+    <variant number="1">
+    <![CDATA[
+package variant1_paymentprocessing;
+
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+
+    // Опис предметної області: Платіжний шлюз для інтернет-еквайрингу.
+    // Завдання коду: Розрахунок комісії та проведення платежу залежно від обраного типу платіжної системи.
+    // 
+    // 
+
+    enum PaymentType {
+        CREDIT_CARD,
+        PAYPAL,
+        BANK_TRANSFER,
+        CRYPTO
+    }
+
+    class PaymentRequest {
+        private String transactionId;
+        private BigDecimal amount;
+        private String currency;
+        private String payerId;
+
+        public PaymentRequest(String transactionId, BigDecimal amount, String currency, String payerId) {
+            this.transactionId = transactionId;
+            this.amount = amount;
+            this.currency = currency;
+            this.payerId = payerId;
+        }
+
+        public String getTransactionId() { return transactionId; }
+        public BigDecimal getAmount() { return amount; }
+        public String getCurrency() { return currency; }
+        public String getPayerId() { return payerId; }
+    }
+
+    public class PaymentProcessor {
+
+        public BigDecimal calculateProcessingFee(BigDecimal amount, PaymentType type) {
+            switch (type) {
+                case CREDIT_CARD:
+                    // 2.5% + $0.30 фіксована комісія
+                    return amount.multiply(new BigDecimal("0.025"))
+                                 .add(new BigDecimal("0.30"))
+                                 .setScale(2, RoundingMode.HALF_UP);
+
+                case PAYPAL:
+                    // 3.4% комісія
+                    return amount.multiply(new BigDecimal("0.034"))
+                                 .setScale(2, RoundingMode.HALF_UP);
+
+                case BANK_TRANSFER:
+                    // Фіксована комісія $5.00 незалежно від суми
+                    return new BigDecimal("5.00");
+
+                case CRYPTO:
+                    // 0.8% комісія, але не менше $1.00 і не більше $20.00
+                    BigDecimal fee = amount.multiply(new BigDecimal("0.008")).setScale(2, RoundingMode.HALF_UP);
+                    if (fee.compareTo(new BigDecimal("1.00")) < 0) return new BigDecimal("1.00");
+                    if (fee.compareTo(new BigDecimal("20.00")) > 0) return new BigDecimal("20.00");
+                    return fee;
+
+                default:
+                    throw new IllegalArgumentException("Непідтримуваний тип платежу: " + type);
+            }
+        }
+
+        public boolean processPayment(PaymentRequest request, PaymentType type) {
+            System.out.println("[LOG] Початок обробки транзакції " + request.getTransactionId() + " на суму " + request.getAmount() + " " + request.getCurrency());
+
+            BigDecimal fee = calculateProcessingFee(request.getAmount(), type);
+            BigDecimal totalAmount = request.getAmount().add(fee);
+
+            switch (type) {
+                case CREDIT_CARD:
+                    System.out.println("[CreditCard] Авторизація картки для користувача " + request.getPayerId() + ". Списано: $" + totalAmount);
+                    return true;
+
+                case PAYPAL:
+                    System.out.println("[PayPal] Перенаправлення на шлюз PayPal для " + request.getPayerId() + ". Комісія системи: $" + fee);
+                    return true;
+
+                case BANK_TRANSFER:
+                    System.out.println("[BankTransfer] Формування платіжного доручення SWIFT/IBAN для " + request.getPayerId() + ". Сума: $" + totalAmount);
+                    return true;
+
+                case CRYPTO:
+                    System.out.println("[Crypto] Очікування підтвердження транзакції в мережі Blockchain для " + request.getPayerId() + ".");
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+    }
+]]>
+    </variant>
+    <variant number="2">
+    <![CDATA[
+package variant2_discountcalculation;
+
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+
+    // Опис предметної області: Модуль дисконтної системи e-commerce платформи.
+    // Завдання коду: Розрахунок підсумкової знижки на замовлення залежно від типу клієнта та промо-акції.
+    // 
+    // 
+
+    enum CustomerCategory {
+        REGULAR,
+        VIP,
+        WHOLESALE,
+        EMPLOYEE
+    }
+
+    class Order {
+        private String orderId;
+        private BigDecimal totalAmount;
+        private int itemCount;
+        private boolean isFirstOrder;
+
+        public Order(String orderId, BigDecimal totalAmount, int itemCount, boolean isFirstOrder) {
+            this.orderId = orderId;
+            this.totalAmount = totalAmount;
+            this.itemCount = itemCount;
+            this.isFirstOrder = isFirstOrder;
+        }
+
+        public String getOrderId() { return orderId; }
+        public BigDecimal getTotalAmount() { return totalAmount; }
+        public int getItemCount() { return itemCount; }
+        public boolean isFirstOrder() { return isFirstOrder; }
+    }
+
+    public class DiscountCalculator {
+
+        public BigDecimal calculateDiscount(Order order, CustomerCategory category) {
+            BigDecimal discount = BigDecimal.ZERO;
+            BigDecimal amount = order.getTotalAmount();
+
+            if (category == CustomerCategory.REGULAR) {
+                // Для звичайних клієнтів: 10% для першого замовлення, або 5% при замовленні від $100
+                if (order.isFirstOrder()) {
+                    discount = amount.multiply(new BigDecimal("0.10"));
+                } else if (amount.compareTo(new BigDecimal("100.00")) >= 0) {
+                    discount = amount.multiply(new BigDecimal("0.05"));
+                }
+            } else if (category == CustomerCategory.VIP) {
+                // VIP: базово 15%, плюс додатково 5% якщо в кошику більше 5 товарів
+                discount = amount.multiply(new BigDecimal("0.15"));
+                if (order.getItemCount() > 5) {
+                    discount = discount.add(amount.multiply(new BigDecimal("0.05")));
+                }
+            } else if (category == CustomerCategory.WHOLESALE) {
+                // Оптові покупці: 20% при замовленні від $1000, інакше 10%
+                if (amount.compareTo(new BigDecimal("1000.00")) >= 0) {
+                    discount = amount.multiply(new BigDecimal("0.20"));
+                } else {
+                    discount = amount.multiply(new BigDecimal("0.10"));
+                }
+            } else if (category == CustomerCategory.EMPLOYEE) {
+                // Співробітники компанії: фіксована знижка 30% на все
+                discount = amount.multiply(new BigDecimal("0.30"));
+            } else {
+                throw new IllegalArgumentException("Невідома категорія клієнта: " + category);
+            }
+
+            discount = discount.setScale(2, RoundingMode.HALF_UP);
+            System.out.println("[DISCOUNT] Замовлення " + order.getOrderId() + ": Категорія=" + category + ", Розрахована знижка=$" + discount);
+            return discount;
+        }
+    }
+]]>
+    </variant>
+    <variant number="3">
+    <![CDATA[
+package variant3_notificationservice;
+
+    // Опис предметної області: Мультиканальна система інформування користувачів.
+    // Завдання коду: Форматування та надсилання повідомлень через вибраний транспортний канал.
+    // 
+    // 
+
+    enum NotificationChannel {
+        EMAIL,
+        SMS,
+        PUSH,
+        TELEGRAM
+    }
+
+    class NotificationMessage {
+        private String recipient;
+        private String subject;
+        private String body;
+        private String priority;
+
+        public NotificationMessage(String recipient, String subject, String body, String priority) {
+            this.recipient = recipient;
+            this.subject = subject;
+            this.body = body;
+            this.priority = priority;
+        }
+
+        public String getRecipient() { return recipient; }
+        public String getSubject() { return subject; }
+        public String getBody() { return body; }
+        public String getPriority() { return priority; }
+    }
+
+    public class NotificationSender {
+
+        public boolean send(NotificationMessage message, NotificationChannel channel) {
+            switch (channel) {
+                case EMAIL:
+                    System.out.println("[EMAIL] To: " + message.getRecipient());
+                    System.out.println("[EMAIL] Subject: " + message.getSubject());
+                    System.out.println("[EMAIL] Body: " + message.getBody());
+                    System.out.println("[EMAIL] Статус: Відправлено через SMTP сервер.");
+                    return true;
+
+                case SMS:
+                    // Для SMS обрізаємо довжину тексту до 160 символів
+                    String body = message.getBody();
+                    String shortText = body.length() > 160 ? body.substring(0, 157) + "..." : body;
+                    System.out.println("[SMS] Phone: " + message.getRecipient());
+                    System.out.println("[SMS] Text: " + shortText);
+                    System.out.println("[SMS] Статус: Надіслано через GSM шлюз.");
+                    return true;
+
+                case PUSH:
+                    System.out.println("[PUSH] DeviceToken: " + message.getRecipient());
+                    System.out.println("[PUSH] Payload: { "title": "" + message.getSubject() + "", "body": "" + message.getBody() + "" }");
+                    System.out.println("[PUSH] Статус: Доставлено через Firebase Cloud Messaging.");
+                    return true;
+
+                case TELEGRAM:
+                    System.out.println("[TELEGRAM] ChatId: " + message.getRecipient());
+                    System.out.println("[TELEGRAM] Message: *" + message.getSubject() + "*
+    " + message.getBody());
+                    System.out.println("[TELEGRAM] Статус: Надіслано через Bot API.");
+                    return true;
+
+                default:
+                    throw new UnsupportedOperationException("Канал сповіщення " + channel + " не підтримується.");
+            }
+        }
+    }
+]]>
+    </variant>
+    <variant number="4">
+    <![CDATA[
+package variant4_taxcalculator;
+
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+
+    // Опис предметної області: Митний декларант / Розрахунок податків на імпорт товарів.
+    // Завдання коду: Обчислення ввізного мита, акцизу та ПДВ залежно від категорії товару.
+    // 
+    // 
+
+    enum ProductCategory {
+        ELECTRONICS,
+        FOOD,
+        LUXURY_GOODS,
+        PHARMACEUTICALS
+    }
+
+    class ImportGoods {
+        private String goodsCode;
+        private String name;
+        private BigDecimal declaredValue;
+        private BigDecimal weightKg;
+
+        public ImportGoods(String goodsCode, String name, BigDecimal declaredValue, BigDecimal weightKg) {
+            this.goodsCode = goodsCode;
+            this.name = name;
+            this.declaredValue = declaredValue;
+            this.weightKg = weightKg;
+        }
+
+        public String getGoodsCode() { return goodsCode; }
+        public String getName() { return name; }
+        public BigDecimal getDeclaredValue() { return declaredValue; }
+        public BigDecimal getWeightKg() { return weightKg; }
+    }
+
+    public class TaxCalculator {
+
+        public BigDecimal calculateTotalTax(ImportGoods goods, ProductCategory category) {
+            BigDecimal importDuty = BigDecimal.ZERO;
+            BigDecimal exciseTax = BigDecimal.ZERO;
+            BigDecimal vatRate = new BigDecimal("0.20"); // Базовий ПДВ 20%
+            BigDecimal declaredValue = goods.getDeclaredValue();
+
+            switch (category) {
+                case ELECTRONICS:
+                    // Електроніка: 5% мито, без акцизу
+                    importDuty = declaredValue.multiply(new BigDecimal("0.05"));
+                    exciseTax = BigDecimal.ZERO;
+                    break;
+
+                case FOOD:
+                    // Продукти харчування: 10% мито + $0.50 за кг екологічного збору, пільговий ПДВ 7%
+                    importDuty = declaredValue.multiply(new BigDecimal("0.10"))
+                            .add(goods.getWeightKg().multiply(new BigDecimal("0.50")));
+                    vatRate = new BigDecimal("0.07");
+                    exciseTax = BigDecimal.ZERO;
+                    break;
+
+                case LUXURY_GOODS:
+                    // Предмети розкоші: 25% мито + 15% акцизний збір
+                    importDuty = declaredValue.multiply(new BigDecimal("0.25"));
+                    exciseTax = declaredValue.multiply(new BigDecimal("0.15"));
+                    break;
+
+                case PHARMACEUTICALS:
+                    // Медикаменти: 0% мито, 0% акциз, пільговий ПДВ 7%
+                    importDuty = BigDecimal.ZERO;
+                    exciseTax = BigDecimal.ZERO;
+                    vatRate = new BigDecimal("0.07");
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Категорія " + category + " відсутня у митному реєстрі.");
+            }
+
+            BigDecimal taxableAmount = declaredValue.add(importDuty).add(exciseTax);
+            BigDecimal vatAmount = taxableAmount.multiply(vatRate);
+            BigDecimal totalTax = importDuty.add(exciseTax).add(vatAmount).setScale(2, RoundingMode.HALF_UP);
+
+            System.out.println("[TAX] Товар '" + goods.getName() + "' (" + category + "): Мито=$" + importDuty + ", Акциз=$" + exciseTax + ", ПДВ=$" + vatAmount + " | Всього до сплати: $" + totalTax);
+            return totalTax;
+        }
+    }
+]]>
+    </variant>
+    <variant number="5">
+    <![CDATA[
+package variant5_shippingcostcalculator;
+
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+
+    // Опис предметної області: Логістичний оператор та служба доставки.
+    // Завдання коду: Розрахунок вартості транспортування посилки залежно від обраного типу доставки.
+    // 
+    // 
+
+    enum DeliveryMethod {
+        STANDARD_COURIER,
+        EXPRESS_AIR,
+        OVERNIGHT_EXPRESS,
+        LOCKER_PICKUP
+    }
+
+    class Parcel {
+        private String trackingNumber;
+        private BigDecimal weightKg;
+        private BigDecimal volumeM3;
+        private BigDecimal distanceKm;
+
+        public Parcel(String trackingNumber, BigDecimal weightKg, BigDecimal volumeM3, BigDecimal distanceKm) {
+            this.trackingNumber = trackingNumber;
+            this.weightKg = weightKg;
+            this.volumeM3 = volumeM3;
+            this.distanceKm = distanceKm;
+        }
+
+        public String getTrackingNumber() { return trackingNumber; }
+        public BigDecimal getWeightKg() { return weightKg; }
+        public BigDecimal getVolumeM3() { return volumeM3; }
+        public BigDecimal getDistanceKm() { return distanceKm; }
+    }
+
+    public class ShippingCostCalculator {
+
+        public BigDecimal calculateCost(Parcel parcel, DeliveryMethod method) {
+            BigDecimal basePrice = BigDecimal.ZERO;
+            BigDecimal weight = parcel.getWeightKg();
+            BigDecimal distance = parcel.getDistanceKm();
+
+            switch (method) {
+                case STANDARD_COURIER:
+                    // $5 базово + $1.50 за кожен кг + $0.10 за кожен км
+                    basePrice = new BigDecimal("5.00")
+                            .add(weight.multiply(new BigDecimal("1.50")))
+                            .add(distance.multiply(new BigDecimal("0.10")));
+                    break;
+
+                case EXPRESS_AIR:
+                    // $25 базово + $4.00 за кг (або $15 за м³ залежно що більше) + $0.50 за км
+                    BigDecimal weightFee = weight.multiply(new BigDecimal("4.00"));
+                    BigDecimal volumeFee = parcel.getVolumeM3().multiply(new BigDecimal("15.00"));
+                    BigDecimal highestFee = weightFee.compareTo(volumeFee) > 0 ? weightFee : volumeFee;
+                    basePrice = new BigDecimal("25.00")
+                            .add(highestFee)
+                            .add(distance.multiply(new BigDecimal("0.50")));
+                    break;
+
+                case OVERNIGHT_EXPRESS:
+                    // $50 терміновий нічний тариф + $3.00 за кг
+                    basePrice = new BigDecimal("50.00").add(weight.multiply(new BigDecimal("3.00")));
+                    break;
+
+                case LOCKER_PICKUP:
+                    // Фіксована ціна $3.00 до 5 кг, понад 5 кг — $0.80 за кожен додатковий кг
+                    if (weight.compareTo(new BigDecimal("5.00")) <= 0) {
+                        basePrice = new BigDecimal("3.00");
+                    } else {
+                        BigDecimal extraWeight = weight.subtract(new BigDecimal("5.00"));
+                        basePrice = new BigDecimal("3.00").add(extraWeight.multiply(new BigDecimal("0.80")));
+                    }
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Спосіб доставки " + method + " не підтримується.");
+            }
+
+            basePrice = basePrice.setScale(2, RoundingMode.HALF_UP);
+            System.out.println("[SHIPPING] Посилка " + parcel.getTrackingNumber() + " (" + method + "): Вага=" + weight + "кг, Відстань=" + distance + "км -> Вартість: $" + basePrice);
+            return basePrice;
+        }
+    }
+]]>
+    </variant>
+    <variant number="6">
+    <![CDATA[
+package variant6_insurancepremiumcalculator;
+
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+
+    // Опис предметної області: Страхова компанія та актуарні розрахунки.
+    // Завдання коду: Обчислення страхового внеску (премії) залежно від типу страхового полісу та ризиків клієнта.
+    // 
+    // 
+
+    enum PolicyType {
+        AUTO,
+        HEALTH,
+        PROPERTY,
+        TRAVEL
+    }
+
+    class PolicyHolder {
+        private String holderId;
+        private int age;
+        private BigDecimal insuredAmount;
+        private boolean hasPriorClaims;
+
+        public PolicyHolder(String holderId, int age, BigDecimal insuredAmount, boolean hasPriorClaims) {
+            this.holderId = holderId;
+            this.age = age;
+            this.insuredAmount = insuredAmount;
+            this.hasPriorClaims = hasPriorClaims;
+        }
+
+        public String getHolderId() { return holderId; }
+        public int getAge() { return age; }
+        public BigDecimal getInsuredAmount() { return insuredAmount; }
+        public boolean isHasPriorClaims() { return hasPriorClaims; }
+    }
+
+    public class InsurancePremiumCalculator {
+
+        public BigDecimal calculatePremium(PolicyHolder holder, PolicyType type) {
+            BigDecimal basePremium = BigDecimal.ZERO;
+            BigDecimal insuredAmount = holder.getInsuredAmount();
+
+            if (type == PolicyType.AUTO) {
+                // Автострахування: 3% від суми + 20% надбавка якщо водію менше 25 років або були страхові випадки
+                basePremium = insuredAmount.multiply(new BigDecimal("0.03"));
+                if (holder.getAge() < 25 || holder.isHasPriorClaims()) {
+                    basePremium = basePremium.multiply(new BigDecimal("1.20"));
+                }
+            } else if (type == PolicyType.HEALTH) {
+                // Медичне страхування: $200 базово + $10 за кожен рік після 40 років
+                basePremium = new BigDecimal("200.00");
+                if (holder.getAge() > 40) {
+                    BigDecimal extraYears = new BigDecimal(holder.getAge() - 40);
+                    basePremium = basePremium.add(extraYears.multiply(new BigDecimal("10.00")));
+                }
+                if (holder.isHasPriorClaims()) {
+                    basePremium = basePremium.add(new BigDecimal("150.00"));
+                }
+            } else if (type == PolicyType.PROPERTY) {
+                // Страхування майна: 0.5% від оціночної вартості нерухомості
+                basePremium = insuredAmount.multiply(new BigDecimal("0.005"));
+            } else if (type == PolicyType.TRAVEL) {
+                // Туристичне страхування: фіксований поліс $30 + 50% надбавка для осіб віком 65+
+                basePremium = new BigDecimal("30.00");
+                if (holder.getAge() >= 65) {
+                    basePremium = basePremium.multiply(new BigDecimal("1.50"));
+                }
+            } else {
+                throw new IllegalArgumentException("Тип страхування " + type + " не зареєстровано у системі.");
+            }
+
+            basePremium = basePremium.setScale(2, RoundingMode.HALF_UP);
+            System.out.println("[INSURANCE] Клієнт " + holder.getHolderId() + " (Вік: " + holder.getAge() + "): Страховий поліс " + type + " -> Річна премія: $" + basePremium);
+            return basePremium;
+        }
+    }
+]]>
+    </variant>
+    <variant number="7">
+    <![CDATA[
+package variant7_reportexporter;
+
+    import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
+    import java.util.ArrayList;
+    import java.util.List;
+
+    // Опис предметної області: Аналітична корпоративна система звітності.
+    // Завдання коду: Форматування дампа даних у різноманітні формати файлів для експорту (PDF, Excel, CSV, JSON).
+    // 
+    // 
+
+    enum ExportFormat {
+        PDF,
+        EXCEL,
+        CSV,
+        JSON
+    }
+
+    class ReportData {
+        private String title;
+        private LocalDateTime generatedAt;
+        private List<String> headers = new ArrayList<>();
+        private List<List<String>> rows = new ArrayList<>();
+
+        public ReportData(String title, LocalDateTime generatedAt) {
+            this.title = title;
+            this.generatedAt = generatedAt;
+        }
+
+        public String getTitle() { return title; }
+        public LocalDateTime getGeneratedAt() { return generatedAt; }
+        public List<String> getHeaders() { return headers; }
+        public List<List<String>> getRows() { return rows; }
+    }
+
+    public class ReportExporter {
+
+        public String export(ReportData data, ExportFormat format) {
+            StringBuilder builder = new StringBuilder();
+
+            switch (format) {
+                case PDF:
+                    builder.append("%PDF-1.7 HEADER
+    ");
+                    builder.append("TITLE: ").append(data.getTitle()).append("
+    ");
+                    builder.append("GENERATED: ").append(data.getGeneratedAt().format(DateTimeFormatter.ISO_LOCAL_DATE)).append("
+    ");
+                    builder.append("[PDF Table Stream Rendered with ").append(data.getRows().size()).append(" rows]
+    ");
+                    break;
+
+                case EXCEL:
+                    builder.append("<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet">
+    ");
+                    builder.append("  <Worksheet ss:Name="").append(data.getTitle()).append("">
+    ");
+                    builder.append("    <!-- Rendered ").append(data.getRows().size()).append(" rows -->
+    ");
+                    builder.append("  </Worksheet>
+    ");
+                    builder.append("</Workbook>
+    ");
+                    break;
+
+                case CSV:
+                    builder.append(String.join(",", data.getHeaders())).append("
+    ");
+                    for (List<String> row : data.getRows()) {
+                        builder.append(String.join(",", row)).append("
+    ");
+                    }
+                    break;
+
+                case JSON:
+                    builder.append("{
+    ");
+                    builder.append("  "title": "").append(data.getTitle()).append("",
+    ");
+                    builder.append("  "generatedAt": "").append(data.getGeneratedAt()).append("",
+    ");
+                    builder.append("  "totalRows": ").append(data.getRows().size()).append("
+    ");
+                    builder.append("}
+    ");
+                    break;
+
+                default:
+                    throw new UnsupportedOperationException("Формат експорту " + format + " не підтримується.");
+            }
+
+            System.out.println("[EXPORTER] Успішно створено звіт '" + data.getTitle() + "' у форматі " + format + ". Довжина: " + builder.length() + " символів.");
+            return builder.toString();
+        }
+    }
+]]>
+    </variant>
+    <variant number="8">
+    <![CDATA[
+package variant8_loaninterestcalculator;
+
+    import java.math.BigDecimal;
+    import java.math.RoundingMode;
+
+    // Опис предметної області: Банківська система скорингу та надання кредитів.
+    // Завдання коду: Розрахунок річної відсоткової ставки та максимально дозволеної суми кредиту залежно від виду кредитного продукту.
+    // 
+    // 
+
+    enum LoanType {
+        MORTGAGE,
+        CONSUMER_LOAN,
+        AUTO_LOAN,
+        STUDENT_LOAN
+    }
+
+    class LoanApplicant {
+        private String applicantId;
+        private int creditScore; // Скоринговий бал 300-850
+        private BigDecimal monthlyIncome;
+        private BigDecimal requestedAmount;
+
+        public LoanApplicant(String applicantId, int creditScore, BigDecimal monthlyIncome, BigDecimal requestedAmount) {
+            this.applicantId = applicantId;
+            this.creditScore = creditScore;
+            this.monthlyIncome = monthlyIncome;
+            this.requestedAmount = requestedAmount;
+        }
+
+        public String getApplicantId() { return applicantId; }
+        public int getCreditScore() { return creditScore; }
+        public BigDecimal getMonthlyIncome() { return monthlyIncome; }
+        public BigDecimal getRequestedAmount() { return requestedAmount; }
+    }
+
+    public class LoanInterestCalculator {
+
+        public BigDecimal calculateInterestRate(LoanApplicant applicant, LoanType type) {
+            BigDecimal baseRate = BigDecimal.ZERO;
+
+            switch (type) {
+                case MORTGAGE:
+                    // Іпотека: Базово 7.5%, скидка 1.0% якщо скоринг > 750, інакше надбавка 1.5%
+                    baseRate = new BigDecimal("0.075");
+                    if (applicant.getCreditScore() > 750) {
+                        baseRate = baseRate.subtract(new BigDecimal("0.010"));
+                    } else if (applicant.getCreditScore() < 650) {
+                        baseRate = baseRate.add(new BigDecimal("0.015"));
+                    }
+                    break;
+
+                case CONSUMER_LOAN:
+                    // Споживчий кредит: Базово 18.0%, скидка 2% для високого доходу ($3000+)
+                    baseRate = new BigDecimal("0.180");
+                    if (applicant.getMonthlyIncome().compareTo(new BigDecimal("3000.00")) >= 0) {
+                        baseRate = baseRate.subtract(new BigDecimal("0.020"));
+                    }
+                    if (applicant.getCreditScore() < 600) {
+                        baseRate = baseRate.add(new BigDecimal("0.040"));
+                    }
+                    break;
+
+                case AUTO_LOAN:
+                    // Автокредит: Базово 11.0%, скидка 1.5% при скорингу 700+
+                    baseRate = new BigDecimal("0.110");
+                    if (applicant.getCreditScore() >= 700) {
+                        baseRate = baseRate.subtract(new BigDecimal("0.015"));
+                    }
+                    break;
+
+                case STUDENT_LOAN:
+                    // Студентський кредит: Фіксована соціальна ставка 4.5%
+                    baseRate = new BigDecimal("0.045");
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Невідомий тип кредиту: " + type);
+            }
+
+            baseRate = baseRate.setScale(4, RoundingMode.HALF_UP);
+            System.out.println("[LOAN] Заявка від " + applicant.getApplicantId() + " (Скоринг: " + applicant.getCreditScore() + "): Продукт=" + type + " -> Ставка: " + baseRate.multiply(new BigDecimal("100")) + "%");
+            return baseRate;
+        }
+    }
+]]>
+    </variant>
+</variants>
