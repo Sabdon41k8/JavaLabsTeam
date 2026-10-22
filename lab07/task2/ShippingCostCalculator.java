@@ -1,100 +1,128 @@
 package lab07.task2;
 
-/**
- * Завдання 4 (ISP), варіант 5: система управління автопарком.
- *
- * "Жирний" IVehicleController розбито на ролеві інтерфейси.
- * Кожен транспорт реалізує лише ті ролі, які реально підтримує,
- * а кожен клієнт залежить лише від тих ролей, які викликає.
- */
-
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Objects;
+ 
 public class ShippingCostCalculator {
-        // ===== Ролеві інтерфейси =====
  
-    /** Роль: керування двигуном. */
-    public interface IEngineControl {
-        void startEngine();
-        void stopEngine();
+ 
+    public BigDecimal calculateCost(Parcel parcel, ShippingStrategy strategy) {
+        Objects.requireNonNull(parcel, "parcel must not be null");
+        Objects.requireNonNull(strategy, "strategy must not be null");
+ 
+        BigDecimal cost = strategy.calculate(parcel).setScale(2, RoundingMode.HALF_UP);
+        System.out.println("[SHIPPING] Посилка " + parcel.getTrackingNumber()
+                + " (" + strategy.name() + "): Вага=" + parcel.getWeightKg()
+                + "кг, Відстань=" + parcel.getDistanceKm() + "км -> Вартість: $" + cost);
+        return cost;
     }
  
-    /** Роль: рух з заданою швидкістю. */
-    public interface IDrivable {
-        void accelerate(double speed);
-    }
+    // Extension Point
  
-    /** Роль: політ. */
-    public interface IFlyable {
-        void flyToAltitude(double meters);
-    }
+    public interface ShippingStrategy {
+        String name();
  
-    /** Роль: занурення під воду. */
-    public interface ISubmersible {
-        void submergeToDepth(double meters);
-    }
+        BigDecimal calculate(Parcel parcel);
  
-    // ===== Реалізації: жодних заглушок і UnsupportedOperationException =====
- 
-    public static class CityCar implements IEngineControl, IDrivable {
-        @Override public void startEngine() { System.out.println("Car engine started."); }
-        @Override public void stopEngine() { System.out.println("Car engine stopped."); }
-        @Override public void accelerate(double speed) { System.out.println("Car accelerated to " + speed + " km/h."); }
-    }
- 
-    public static class CargoDrone implements IEngineControl, IDrivable, IFlyable {
-        @Override public void startEngine() { System.out.println("Drone rotors armed."); }
-        @Override public void stopEngine() { System.out.println("Drone rotors disarmed."); }
-        @Override public void accelerate(double speed) { System.out.println("Drone speed set to " + speed + " km/h."); }
-        @Override public void flyToAltitude(double meters) { System.out.println("Flying at " + meters + " meters altitude."); }
-    }
- 
-    /** Транспорт, якому справді потрібна роль ISubmersible. */
-    public static class CargoSubmarine implements IEngineControl, IDrivable, ISubmersible {
-        @Override public void startEngine() { System.out.println("Submarine engine started."); }
-        @Override public void stopEngine() { System.out.println("Submarine engine stopped."); }
-        @Override public void accelerate(double speed) { System.out.println("Submarine speed set to " + speed + " km/h."); }
-        @Override public void submergeToDepth(double meters) { System.out.println("Submerged to " + meters + " meters depth."); }
-    }
- 
-    // ===== Клієнти: залежать лише від тих ролей, які викликають =====
- 
-    public static class FleetDispatcher {
- 
-        /** Потрібні лише двигун і рух. Приймає і авто, і дрона, і підводний човен. */
-        public <T extends IEngineControl & IDrivable> void runRoute(T vehicle, double speed) {
-            vehicle.startEngine();
-            vehicle.accelerate(speed);
-            vehicle.stopEngine();
-        }
- 
-        /** Потрібен лише політ. */
-        public void climb(IFlyable aircraft, double altitude) {
-            aircraft.flyToAltitude(altitude);
-        }
- 
-        /** Потрібне лише занурення. */
-        public void dive(ISubmersible vessel, double depth) {
-            vessel.submergeToDepth(depth);
+        static BigDecimal money(String value) {
+            return new BigDecimal(value);
         }
     }
  
-    // ===== Демо =====
+    public static class Parcel {
+        private final String trackingNumber;
+        private final BigDecimal weightKg;
+        private final BigDecimal volumeM3;
+        private final BigDecimal distanceKm;
+ 
+        public Parcel(String trackingNumber, BigDecimal weightKg, BigDecimal volumeM3, BigDecimal distanceKm) {
+            this.trackingNumber = trackingNumber;
+            this.weightKg = weightKg;
+            this.volumeM3 = volumeM3;
+            this.distanceKm = distanceKm;
+        }
+ 
+        public String getTrackingNumber() { return trackingNumber; }
+        public BigDecimal getWeightKg() { return weightKg; }
+        public BigDecimal getVolumeM3() { return volumeM3; }
+        public BigDecimal getDistanceKm() { return distanceKm; }
+    }
+
+    public static class StandardCourierStrategy implements ShippingStrategy {
+        @Override public String name() { return "STANDARD_COURIER"; }
+ 
+        @Override
+        public BigDecimal calculate(Parcel p) {
+            return ShippingStrategy.money("5.00")
+                    .add(p.getWeightKg().multiply(ShippingStrategy.money("1.50")))
+                    .add(p.getDistanceKm().multiply(ShippingStrategy.money("0.10")));
+        }
+    }
+ 
+    public static class ExpressAirStrategy implements ShippingStrategy {
+        @Override public String name() { return "EXPRESS_AIR"; }
+ 
+        @Override
+        public BigDecimal calculate(Parcel p) {
+            BigDecimal weightFee = p.getWeightKg().multiply(ShippingStrategy.money("4.00"));
+            BigDecimal volumeFee = p.getVolumeM3().multiply(ShippingStrategy.money("15.00"));
+            return ShippingStrategy.money("25.00")
+                    .add(weightFee.max(volumeFee))
+                    .add(p.getDistanceKm().multiply(ShippingStrategy.money("0.50")));
+        }
+    }
+ 
+    public static class OvernightExpressStrategy implements ShippingStrategy {
+        @Override public String name() { return "OVERNIGHT_EXPRESS"; }
+ 
+        @Override
+        public BigDecimal calculate(Parcel p) {
+            return ShippingStrategy.money("50.00")
+                    .add(p.getWeightKg().multiply(ShippingStrategy.money("3.00")));
+        }
+    }
+ 
+    public static class LockerPickupStrategy implements ShippingStrategy {
+        private static final BigDecimal FREE_LIMIT_KG = ShippingStrategy.money("5.00");
+ 
+        @Override public String name() { return "LOCKER_PICKUP"; }
+ 
+        @Override
+        public BigDecimal calculate(Parcel p) {
+            BigDecimal extraWeight = p.getWeightKg().subtract(FREE_LIMIT_KG).max(BigDecimal.ZERO);
+            return ShippingStrategy.money("3.00")
+                    .add(extraWeight.multiply(ShippingStrategy.money("0.80")));
+        }
+    }
+ 
+    // ===== Демонстрація відкритості до розширення =====
+    // Новий спосіб доставки: жоден рядок у ShippingCostCalculator не змінено.
+ 
+    /** $10 базово + $2.50 за кг + $0.30 за км. */
+    public static class DroneDeliveryStrategy implements ShippingStrategy {
+        @Override public String name() { return "DRONE_DELIVERY"; }
+ 
+        @Override
+        public BigDecimal calculate(Parcel p) {
+            return ShippingStrategy.money("10.00")
+                    .add(p.getWeightKg().multiply(ShippingStrategy.money("2.50")))
+                    .add(p.getDistanceKm().multiply(ShippingStrategy.money("0.30")));
+        }
+    }
  
     public static void main(String[] args) {
-        FleetDispatcher dispatcher = new FleetDispatcher();
+        ShippingCostCalculator calculator = new ShippingCostCalculator();
  
-        CityCar car = new CityCar();
-        CargoDrone drone = new CargoDrone();
-        CargoSubmarine submarine = new CargoSubmarine();
+        Parcel parcel = new Parcel("UA-0001", new BigDecimal("2"), new BigDecimal("0.1"), new BigDecimal("100"));
+        Parcel heavy = new Parcel("UA-0002", new BigDecimal("7"), new BigDecimal("0.2"), new BigDecimal("50"));
  
-        dispatcher.runRoute(car, 60);
-        dispatcher.runRoute(drone, 40);
-        dispatcher.climb(drone, 120);
-        dispatcher.runRoute(submarine, 15);
-        dispatcher.dive(submarine, 50);
+        calculator.calculateCost(parcel, new StandardCourierStrategy());     // 18.00
+        calculator.calculateCost(parcel, new ExpressAirStrategy());          // 83.00
+        calculator.calculateCost(parcel, new OvernightExpressStrategy());    // 56.00
+        calculator.calculateCost(heavy, new LockerPickupStrategy());         // 4.60
  
-        // dispatcher.climb(car, 100);    // не скомпілюється: CityCar не IFlyable
-        // dispatcher.dive(drone, 10);    // не скомпілюється: CargoDrone не ISubmersible
+        // Нова стратегія без змін у калькуляторі
+        calculator.calculateCost(parcel, new DroneDeliveryStrategy());       // 45.00
     }
-
 }
