@@ -1,4 +1,4 @@
-package lab08.task2;
+package lab08.src;
 
 public class VehicleRentalSystem {
 
@@ -15,9 +15,18 @@ public class VehicleRentalSystem {
                 int driverExperienceYears,
                 String phone) {
 
+            if (id <= 0) {
+                throw new IllegalArgumentException("Client id must be positive");
+            }
+            if (name == null || name.isBlank()) {
+                throw new IllegalArgumentException("Client name must not be blank");
+            }
             if (driverExperienceYears < 0) {
                 throw new IllegalArgumentException(
                         "Experience cannot be negative");
+            }
+            if (phone == null || phone.isBlank()) {
+                throw new IllegalArgumentException("Client phone must not be blank");
             }
 
             this.id = id;
@@ -52,6 +61,19 @@ public class VehicleRentalSystem {
                 VehicleClass vehicleClass,
                 double dailyRate) {
 
+            if (id <= 0) {
+                throw new IllegalArgumentException("Vehicle id must be positive");
+            }
+            if (model == null || model.isBlank()) {
+                throw new IllegalArgumentException("Vehicle model must not be blank");
+            }
+            if (vehicleClass == null) {
+                throw new IllegalArgumentException("Vehicle class is required");
+            }
+            if (!Double.isFinite(dailyRate) || dailyRate <= 0) {
+                throw new IllegalArgumentException("Daily rate must be positive and finite");
+            }
+
             this.id = id;
             this.model = model;
             this.vehicleClass = vehicleClass;
@@ -64,8 +86,20 @@ public class VehicleRentalSystem {
                     * vehicleClass.getMultiplier();
         }
 
+        public int getId() {
+            return id;
+        }
+
         public String getModel() {
             return model;
+        }
+
+        public VehicleClass getVehicleClass() {
+            return vehicleClass;
+        }
+
+        public double getDailyRate() {
+            return dailyRate;
         }
     }
 
@@ -89,9 +123,21 @@ public class VehicleRentalSystem {
                 int rentalDays,
                 InsuranceType insuranceType) {
 
+            if (id <= 0) {
+                throw new IllegalArgumentException("Agreement id must be positive");
+            }
+            if (client == null) {
+                throw new IllegalArgumentException("Client is required");
+            }
+            if (vehicle == null) {
+                throw new IllegalArgumentException("Vehicle is required");
+            }
             if (rentalDays <= 0) {
                 throw new IllegalArgumentException(
                         "Rental days must be positive");
+            }
+            if (insuranceType == null) {
+                throw new IllegalArgumentException("Insurance type is required");
             }
 
             this.id = id;
@@ -143,6 +189,26 @@ public class VehicleRentalSystem {
         public double calculateFinalPrice() {
             return calculateRentalTotal()
                     + calculateInsuranceTotal();
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public Client getClient() {
+            return client;
+        }
+
+        public Vehicle getVehicle() {
+            return vehicle;
+        }
+
+        public int getRentalDays() {
+            return rentalDays;
+        }
+
+        public InsuranceType getInsuranceType() {
+            return insuranceType;
         }
 
         public void approve() {
