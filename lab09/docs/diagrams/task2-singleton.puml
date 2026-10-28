@@ -1,0 +1,45 @@
+@startuml
+title Завдання 2 — Singleton: єдина служба розрахунків
+skinparam classAttributeIconSize 0
+
+class Task2Runner <<Client>> {
+  + run(): void
+}
+
+class BillingService <<Singleton>> {
+  - {static} INSTANCE: BillingService
+  - chargesByGuest: Map<String, List<Charge>>
+  - serviceId: String
+  - BillingService()
+  + {static} getInstance(): BillingService
+  + getServiceId(): String
+  + addCharge(guestId: String, guestName: String, roomNumber: String, department: Department, description: String, amount: BigDecimal): void
+  + printFinalBill(guestId: String): void
+}
+
+class "BillingService::Charge" as Charge <<private nested record>> {
+  - guestId: String
+  - guestName: String
+  - roomNumber: String
+  - department: Department
+  - description: String
+  - amount: BigDecimal
+}
+
+enum Department {
+  RECEPTION
+  RESTAURANT
+  SPA
+  EQUIPMENT_RENTAL
+}
+
+Task2Runner ..> BillingService : obtains one instance
+BillingService "1" *-- "0..*" Charge : stores charges
+Charge --> "1" Department : category
+note right of BillingService
+  Private constructor prevents
+  external instantiation.
+  All departments use getInstance()
+  and add charges to the same service.
+end note
+@enduml
