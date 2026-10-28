@@ -1,0 +1,52 @@
+@startuml
+title Завдання 1 — Object Pool: електронні ключ-картки
+skinparam classAttributeIconSize 0
+
+class Task1Runner <<Client>> {
+  + run(): void
+}
+
+class KeyCardPool <<Object Pool>> {
+  - available: Deque<ElectronicKeyCard>
+  - allCards: List<ElectronicKeyCard>
+  + KeyCardPool(capacity: int)
+  + acquire(roomNumber: String): ElectronicKeyCard
+  + release(card: ElectronicKeyCard): void
+  + getAvailableCount(): int
+  + getCapacity(): int
+  + printStatistics(): void
+}
+
+class ElectronicKeyCard <<Pooled Object>> {
+  - cardId: int
+  - assignedRoom: String
+  - validUntil: LocalDateTime
+  - checkedOut: boolean
+  - issueCount: int
+  + getCardId(): int
+  + getAssignedRoom(): String
+  + getValidUntil(): LocalDateTime
+  + isCheckedOut(): boolean
+  + getIssueCount(): int
+  ~ programForRoom(roomNumber: String): void
+  ~ eraseAccess(): void
+  + canOpenRoom(roomNumber: String): boolean
+}
+
+class Guest <<Domain Entity>> {
+  - name: String
+  - roomNumber: String
+  + getName(): String
+  + getRoomNumber(): String
+}
+
+Task1Runner ..> KeyCardPool : requests / returns cards
+Task1Runner ..> Guest : checks in guests
+KeyCardPool "1" *-- "5" ElectronicKeyCard : owns and reuses
+note right of KeyCardPool
+  When no card is available,
+  a temporary mechanical key is issued.
+  Access and expiration are erased
+  before a card returns to the pool.
+end note
+@enduml
