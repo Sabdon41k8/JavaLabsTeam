@@ -1,33 +1,20 @@
 package lab08.src;
 
+import java.util.Objects;
+
 public class VehicleRentalSystem {
 
     public static class Client {
-
         private final int id;
         private final String name;
         private final int driverExperienceYears;
         private final String phone;
 
-        public Client(
-                int id,
-                String name,
-                int driverExperienceYears,
-                String phone) {
-
-            if (id <= 0) {
-                throw new IllegalArgumentException("Client id must be positive");
-            }
-            if (name == null || name.isBlank()) {
-                throw new IllegalArgumentException("Client name must not be blank");
-            }
-            if (driverExperienceYears < 0) {
-                throw new IllegalArgumentException(
-                        "Experience cannot be negative");
-            }
-            if (phone == null || phone.isBlank()) {
-                throw new IllegalArgumentException("Client phone must not be blank");
-            }
+        public Client(int id, String name, int driverExperienceYears, String phone) {
+            if (id <= 0) throw new IllegalArgumentException("ID клієнта має бути додатним");
+            if (name == null || name.isBlank()) throw new IllegalArgumentException("Ім'я не може бути порожнім");
+            if (driverExperienceYears < 0) throw new IllegalArgumentException("Стаж не може бути від'ємним");
+            if (phone == null || phone.isBlank()) throw new IllegalArgumentException("Телефон не може бути порожнім");
 
             this.id = id;
             this.name = name;
@@ -35,43 +22,27 @@ public class VehicleRentalSystem {
             this.phone = phone;
         }
 
-        public boolean isInexperiencedDriver() {
-            return driverExperienceYears < 3;
+        public boolean isInexperiencedDriver(int thresholdYears) {
+            return driverExperienceYears < thresholdYears;
         }
 
-        public String getName() {
-            return name;
-        }
-
-        public String getPhone() {
-            return phone;
-        }
+        public String getName() { return name; }
+        public String getPhone() { return phone; }
+        public int getDriverExperienceYears() { return driverExperienceYears; }
     }
 
     public static class Vehicle {
-
         private final int id;
         private final String model;
         private final VehicleClass vehicleClass;
-        private final double dailyRate;
+        private final Money dailyRate;
 
-        public Vehicle(
-                int id,
-                String model,
-                VehicleClass vehicleClass,
-                double dailyRate) {
-
-            if (id <= 0) {
-                throw new IllegalArgumentException("Vehicle id must be positive");
-            }
-            if (model == null || model.isBlank()) {
-                throw new IllegalArgumentException("Vehicle model must not be blank");
-            }
-            if (vehicleClass == null) {
-                throw new IllegalArgumentException("Vehicle class is required");
-            }
-            if (!Double.isFinite(dailyRate) || dailyRate <= 0) {
-                throw new IllegalArgumentException("Daily rate must be positive and finite");
+        public Vehicle(int id, String model, VehicleClass vehicleClass, Money dailyRate) {
+            if (id <= 0) throw new IllegalArgumentException("ID авто має бути додатним");
+            if (model == null || model.isBlank()) throw new IllegalArgumentException("Модель не може бути порожньою");
+            if (vehicleClass == null) throw new IllegalArgumentException("Клас авто є обов'язковим");
+            if (dailyRate == null || dailyRate.compareTo(Money.ZERO) <= 0) {
+                throw new IllegalArgumentException("Тариф має бути додатним");
             }
 
             this.id = id;
@@ -80,154 +51,84 @@ public class VehicleRentalSystem {
             this.dailyRate = dailyRate;
         }
 
-        public double calculateRentalCost(int days) {
-            return dailyRate
-                    * days
-                    * vehicleClass.getMultiplier();
+        // Information Expert: Vehicle сам обчислює вартість оренди з урахуванням свого класу
+        public Money calculateRentalCost(int days) {
+            return dailyRate.multiply(days).multiply(vehicleClass.getMultiplier());
         }
 
-        public int getId() {
-            return id;
-        }
-
-        public String getModel() {
-            return model;
-        }
-
-        public VehicleClass getVehicleClass() {
-            return vehicleClass;
-        }
-
-        public double getDailyRate() {
-            return dailyRate;
-        }
+        public int getId() { return id; }
+        public String getModel() { return model; }
+        public VehicleClass getVehicleClass() { return vehicleClass; }
+        public Money getDailyRate() { return dailyRate; }
     }
 
     public static class RentalAgreement {
-
-        private static final double BASE_DEPOSIT = 5000;
-        private static final double EXTRA_DEPOSIT = 3000;
-
         private final int id;
         private final Client client;
         private final Vehicle vehicle;
         private final int rentalDays;
         private final InsuranceType insuranceType;
+        private final DepositPolicy depositPolicy;
 
         private RentalStatus status;
 
         private RentalAgreement(
-                int id,
-                Client client,
-                Vehicle vehicle,
-                int rentalDays,
-                InsuranceType insuranceType) {
+                int id, Client client, Vehicle vehicle, int rentalDays,
+                InsuranceType insuranceType, DepositPolicy depositPolicy) {
 
-            if (id <= 0) {
-                throw new IllegalArgumentException("Agreement id must be positive");
-            }
-            if (client == null) {
-                throw new IllegalArgumentException("Client is required");
-            }
-            if (vehicle == null) {
-                throw new IllegalArgumentException("Vehicle is required");
-            }
-            if (rentalDays <= 0) {
-                throw new IllegalArgumentException(
-                        "Rental days must be positive");
-            }
-            if (insuranceType == null) {
-                throw new IllegalArgumentException("Insurance type is required");
-            }
+            if (id <= 0) throw new IllegalArgumentException("ID договору має бути додатним");
+            this.client = Objects.requireNonNull(client, "Клієнт є обов'язковим");
+            this.vehicle = Objects.requireNonNull(vehicle, "Авто є обов'язковим");
+            if (rentalDays <= 0) throw new IllegalArgumentException("Дні оренди мають бути додатними");
+            this.insuranceType = Objects.requireNonNull(insuranceType, "Тип страховки є обов'язковим");
+            this.depositPolicy = Objects.requireNonNull(depositPolicy, "Політика застави є обов'язковою");
 
             this.id = id;
-            this.client = client;
-            this.vehicle = vehicle;
             this.rentalDays = rentalDays;
-            this.insuranceType = insuranceType;
             this.status = RentalStatus.NEW;
         }
 
-        // GRASP Creator
+        // Creator (GRASP)
         public static RentalAgreement create(
-                int id,
-                Client client,
-                Vehicle vehicle,
-                int rentalDays,
-                InsuranceType insuranceType) {
-
-            return new RentalAgreement(
-                    id,
-                    client,
-                    vehicle,
-                    rentalDays,
-                    insuranceType
-            );
+                int id, Client client, Vehicle vehicle, int rentalDays,
+                InsuranceType insuranceType, DepositPolicy depositPolicy) {
+            return new RentalAgreement(id, client, vehicle, rentalDays, insuranceType, depositPolicy);
         }
 
-        // GRASP Information Expert
-        public double calculateRentalTotal() {
+        // Information Expert (GRASP)
+        public Money calculateRentalTotal() {
             return vehicle.calculateRentalCost(rentalDays);
         }
 
-        public double calculateInsuranceTotal() {
-            return insuranceType.getDailyCost()
-                    * rentalDays;
+        public Money calculateInsuranceTotal() {
+            return insuranceType.getDailyCost().multiply(rentalDays);
         }
 
-        public double calculateDeposit() {
-
-            double deposit = BASE_DEPOSIT;
-
-            if (client.isInexperiencedDriver()) {
-                deposit += EXTRA_DEPOSIT;
-            }
-
-            return deposit;
+        // Delegated to DepositPolicy Strategy (Polymorphism + Protected Variations)
+        public Money calculateDeposit() {
+            return depositPolicy.calculateDeposit(client);
         }
 
-        public double calculateFinalPrice() {
-            return calculateRentalTotal()
-                    + calculateInsuranceTotal();
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public Client getClient() {
-            return client;
-        }
-
-        public Vehicle getVehicle() {
-            return vehicle;
-        }
-
-        public int getRentalDays() {
-            return rentalDays;
-        }
-
-        public InsuranceType getInsuranceType() {
-            return insuranceType;
+        public Money calculateFinalPrice() {
+            return calculateRentalTotal().add(calculateInsuranceTotal());
         }
 
         public void approve() {
-
             if (status == RentalStatus.APPROVED) {
-                throw new IllegalStateException(
-                        "Agreement already approved");
+                throw new IllegalStateException("Договір вже підтверджено");
             }
-
             status = RentalStatus.APPROVED;
         }
 
-        public RentalStatus getStatus() {
-            return status;
-        }
+        public int getId() { return id; }
+        public Client getClient() { return client; }
+        public Vehicle getVehicle() { return vehicle; }
+        public int getRentalDays() { return rentalDays; }
+        public InsuranceType getInsuranceType() { return insuranceType; }
+        public RentalStatus getStatus() { return status; }
     }
 
     public enum VehicleClass {
-
         ECONOMY(1.0),
         BUSINESS(1.3),
         SUV(1.2);
@@ -238,29 +139,21 @@ public class VehicleRentalSystem {
             this.multiplier = multiplier;
         }
 
-        public double getMultiplier() {
-            return multiplier;
-        }
+        public double getMultiplier() { return multiplier; }
     }
 
     public enum InsuranceType {
+        BASIC(Money.of(200)),
+        FULL(Money.of(500));
 
-        BASIC(200),
-        FULL(500);
+        private final Money dailyCost;
 
-        private final double dailyCost;
-
-        InsuranceType(double dailyCost) {
+        InsuranceType(Money dailyCost) {
             this.dailyCost = dailyCost;
         }
 
-        public double getDailyCost() {
-            return dailyCost;
-        }
+        public Money getDailyCost() { return dailyCost; }
     }
 
-    public enum RentalStatus {
-        NEW,
-        APPROVED
-    }
+    public enum RentalStatus { NEW, APPROVED }
 }

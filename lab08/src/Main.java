@@ -13,12 +13,15 @@ public class Main {
 
     public static void main(String[] args) {
         VehicleCatalog vehicleCatalog = new InMemoryVehicleCatalog(List.of(
-                new Vehicle(1, "Toyota Corolla", VehicleClass.ECONOMY, 1500),
-                new Vehicle(2, "Toyota Camry", VehicleClass.BUSINESS, 2200),
-                new Vehicle(3, "Toyota RAV4", VehicleClass.SUV, 1800)));
+                new Vehicle(1, "Toyota Corolla", VehicleClass.ECONOMY, Money.of(1500)),
+                new Vehicle(2, "Toyota Camry", VehicleClass.BUSINESS, Money.of(2200)),
+                new Vehicle(3, "Toyota RAV4", VehicleClass.SUV, Money.of(1800))));
+        
         RentalRepository rentalRepository = new InMemoryRentalRepository();
+        DepositPolicy depositPolicy = ExperienceBasedDepositPolicy.defaultConfig();
+
         RentalController controller =
-                new RentalController(vehicleCatalog, rentalRepository);
+                new RentalController(vehicleCatalog, rentalRepository, depositPolicy);
 
         try (Scanner scanner = new Scanner(System.in)) {
             runConsole(scanner, vehicleCatalog, controller);
@@ -35,21 +38,17 @@ public class Main {
             System.out.println("0 — вихід");
             int choice = readInt(scanner, "Ваш вибір: ");
 
-            if (choice == 0) {
-                return;
-            }
+            if (choice == 0) return;
             if (choice != 1) {
                 System.out.println("Оберіть 1 або 0.");
                 continue;
             }
 
             try {
-                RentalAgreement agreement = readAndCreateRental(
-                        scanner, vehicleCatalog, controller);
+                RentalAgreement agreement = readAndCreateRental(scanner, vehicleCatalog, controller);
                 printAgreement(agreement);
             } catch (IllegalArgumentException exception) {
-                System.out.println("Не вдалося оформити оренду: "
-                        + exception.getMessage());
+                System.out.println("Не вдалося оформити оренду: " + exception.getMessage());
             }
         }
     }
@@ -67,7 +66,7 @@ public class Main {
         for (Vehicle vehicle : vehicleCatalog.findAll()) {
             System.out.printf(
                     Locale.forLanguageTag("uk-UA"),
-                    "%d — %s (%s), %.2f грн/день%n",
+                    "%d — %s (%s), %s/день%n",
                     vehicle.getId(),
                     vehicle.getModel(),
                     vehicle.getVehicleClass(),
@@ -113,8 +112,7 @@ public class Main {
             try {
                 return InsuranceType.valueOf(input);
             } catch (IllegalArgumentException exception) {
-                System.out.println("Допустимі значення: "
-                        + Arrays.toString(InsuranceType.values()));
+                System.out.println("Допустимі значення: " + Arrays.toString(InsuranceType.values()));
             }
         }
     }
@@ -126,10 +124,10 @@ public class Main {
                 Ваучер оренди #%d
                 Клієнт: %s
                 Авто: %s
-                Оренда: %.2f грн
-                Страховка: %.2f грн
-                Застава: %.2f грн
-                Загалом: %.2f грн
+                Оренда: %s
+                Страховка: %s
+                Застава: %s
+                Загалом: %s
                 Статус: %s
                 %n""",
                 agreement.getId(),
