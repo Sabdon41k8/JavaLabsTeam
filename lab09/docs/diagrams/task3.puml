@@ -1,0 +1,36 @@
+@startuml
+!pragma layout smetana
+title Завдання 3 — Prototype: пакети проживання
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 55
+skinparam ranksep 45
+left to right direction
+
+class Task3Demo <<Client>> {
+  {static} + main(args: String[]): void
+  {static} + runDemo(): void
+}
+
+class StayPackage <<Prototype>> {
+  - packageName: String
+  - guestName: String
+  - includedServices: List~String~
+  - spaProcedures: List~String~
+  - skiPassDays: int
+  - discountPercent: BigDecimal
+  --
+  + copyForGuest(guestName: String): StayPackage
+  + addSpaProcedure(procedure: String): void
+  + setSkiPassDays(days: int): void
+  + setDiscountPercent(percent: BigDecimal): void
+}
+
+Task3Demo ..> StayPackage : creates template and guest copies
+
+note bottom of StayPackage
+  Copies own independent service lists,
+  so guest-specific changes do not affect
+  the template or other guests.
+end note
+@enduml

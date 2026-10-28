@@ -1,4 +1,5 @@
 @startuml
+!pragma layout smetana
 title Завдання 2 — Singleton: єдина служба розрахунків
 skinparam classAttributeIconSize 0
 

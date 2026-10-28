@@ -1,4 +1,4 @@
-package lab09.task3;
+package lab09.src.task3;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

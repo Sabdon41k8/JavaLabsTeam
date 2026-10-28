@@ -1,4 +1,5 @@
 @startuml
+!pragma layout smetana
 title Завдання 1 — Object Pool: електронні ключ-картки
 skinparam classAttributeIconSize 0
 
