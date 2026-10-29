@@ -1,8 +1,10 @@
-package lab08.src;
+package lab08.src.ui;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import lab08.src.VehicleRentalSystem;
 import lab08.src.VehicleRentalSystem.Vehicle;
 
 public class InMemoryVehicleCatalog implements VehicleCatalog {
