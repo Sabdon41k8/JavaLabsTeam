@@ -1,6 +1,5 @@
 package lab08.src.ui;
 
-import lab08.src.VehicleRentalSystem;
 import lab08.src.VehicleRentalSystem.InsuranceType;
 
 public record CreateRentalRequest(

@@ -8,6 +8,12 @@ import lab08.src.VehicleRentalSystem.InsuranceType;
 import lab08.src.VehicleRentalSystem.RentalAgreement;
 import lab08.src.VehicleRentalSystem.Vehicle;
 import lab08.src.VehicleRentalSystem.VehicleClass;
+import lab08.src.ui.CreateRentalRequest;
+import lab08.src.ui.InMemoryRentalRepository;
+import lab08.src.ui.InMemoryVehicleCatalog;
+import lab08.src.ui.RentalController;
+import lab08.src.ui.RentalRepository;
+import lab08.src.ui.VehicleCatalog;
 
 public class Main {
 
