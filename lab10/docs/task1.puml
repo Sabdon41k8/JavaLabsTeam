@@ -1,0 +1,126 @@
+@startuml task1-abstract-factory
+title Завдання 1. Підготовка номера за категорією — Abstract Factory
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+interface RoomItem <<AbstractProduct (база)>> {
+  + category(): String
+  + describe(): String
+}
+interface CosmeticsSet <<AbstractProduct A>>
+interface MinibarContent <<AbstractProduct B>>
+interface Textile <<AbstractProduct C>>
+
+abstract class BaseItem <<допоміжна база>> {
+  - category: String
+  - title: String
+  - content: String
+  + category(): String
+  + describe(): String
+}
+
+RoomItem <|-- CosmeticsSet
+RoomItem <|-- MinibarContent
+RoomItem <|-- Textile
+RoomItem <|.. BaseItem
+
+class StandardCosmetics <<ConcreteProduct>>
+class StandardMinibar <<ConcreteProduct>>
+class StandardTextile <<ConcreteProduct>>
+class LuxeCosmetics <<ConcreteProduct>>
+class LuxeMinibar <<ConcreteProduct>>
+class LuxeTextile <<ConcreteProduct>>
+class FamilyCosmetics <<ConcreteProduct>>
+class FamilyMinibar <<ConcreteProduct>>
+class FamilyTextile <<ConcreteProduct>>
+class ChaletCosmetics <<ConcreteProduct, розширення>>
+class ChaletMinibar <<ConcreteProduct, розширення>>
+class ChaletTextile <<ConcreteProduct, розширення>>
+
+BaseItem <|-- StandardCosmetics
+BaseItem <|-- StandardMinibar
+BaseItem <|-- StandardTextile
+BaseItem <|-- LuxeCosmetics
+BaseItem <|-- LuxeMinibar
+BaseItem <|-- LuxeTextile
+BaseItem <|-- FamilyCosmetics
+BaseItem <|-- FamilyMinibar
+BaseItem <|-- FamilyTextile
+BaseItem <|-- ChaletCosmetics
+BaseItem <|-- ChaletMinibar
+BaseItem <|-- ChaletTextile
+
+CosmeticsSet <|.. StandardCosmetics
+CosmeticsSet <|.. LuxeCosmetics
+CosmeticsSet <|.. FamilyCosmetics
+CosmeticsSet <|.. ChaletCosmetics
+MinibarContent <|.. StandardMinibar
+MinibarContent <|.. LuxeMinibar
+MinibarContent <|.. FamilyMinibar
+MinibarContent <|.. ChaletMinibar
+Textile <|.. StandardTextile
+Textile <|.. LuxeTextile
+Textile <|.. FamilyTextile
+Textile <|.. ChaletTextile
+
+interface RoomKitFactory <<AbstractFactory>> {
+  + category(): String
+  + createCosmetics(): CosmeticsSet
+  + createMinibar(): MinibarContent
+  + createTextile(): Textile
+}
+class StandardRoomKitFactory <<ConcreteFactory>>
+class LuxeRoomKitFactory <<ConcreteFactory>>
+class FamilyRoomKitFactory <<ConcreteFactory>>
+class ChaletRoomKitFactory <<ConcreteFactory, розширення>>
+
+RoomKitFactory <|.. StandardRoomKitFactory
+RoomKitFactory <|.. LuxeRoomKitFactory
+RoomKitFactory <|.. FamilyRoomKitFactory
+RoomKitFactory <|.. ChaletRoomKitFactory
+
+class HousekeepingService <<Client>> {
+  - {static} SOURCE: String
+  + prepareRoom(roomNumber: String, factory: RoomKitFactory): void
+}
+class Main <<Runner>> {
+  - {static} runTask1(): void
+  - {static} task1ThreeCategories(service: HousekeepingService): void
+  - {static} task1NewCategoryChalet(service: HousekeepingService): void
+  + {static} main(args: String[]): void
+}
+class Log <<утиліта журналу>> {
+  - {static} minutes: int
+  + {static} event(source: String, text: String): void
+}
+
+HousekeepingService "1" ..> "1" RoomKitFactory : <<use>>
+HousekeepingService "1" ..> "1" CosmeticsSet : <<use>>
+HousekeepingService "1" ..> "1" MinibarContent : <<use>>
+HousekeepingService "1" ..> "1" Textile : <<use>>
+HousekeepingService ..> Log
+Main "1" ..> "1" HousekeepingService
+Main "1" ..> "1" StandardRoomKitFactory
+Main "1" ..> "1" LuxeRoomKitFactory
+Main "1" ..> "1" FamilyRoomKitFactory
+Main "1" ..> "1" ChaletRoomKitFactory
+
+StandardRoomKitFactory "1" ..> "1" StandardCosmetics : <<create>>
+StandardRoomKitFactory "1" ..> "1" StandardMinibar : <<create>>
+StandardRoomKitFactory "1" ..> "1" StandardTextile : <<create>>
+LuxeRoomKitFactory "1" ..> "1" LuxeCosmetics : <<create>>
+LuxeRoomKitFactory "1" ..> "1" LuxeMinibar : <<create>>
+LuxeRoomKitFactory "1" ..> "1" LuxeTextile : <<create>>
+FamilyRoomKitFactory "1" ..> "1" FamilyCosmetics : <<create>>
+FamilyRoomKitFactory "1" ..> "1" FamilyMinibar : <<create>>
+FamilyRoomKitFactory "1" ..> "1" FamilyTextile : <<create>>
+ChaletRoomKitFactory "1" ..> "1" ChaletCosmetics : <<create>>
+ChaletRoomKitFactory "1" ..> "1" ChaletMinibar : <<create>>
+ChaletRoomKitFactory "1" ..> "1" ChaletTextile : <<create>>
+
+note right of HousekeepingService
+  Не знає конкретних класів
+  і не розгалужується за категорією.
+  Нова категорія = нові класи, без змін тут.
+end note
+@enduml
