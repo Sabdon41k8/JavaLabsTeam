@@ -1,0 +1,74 @@
+@startuml task2-builder
+title Завдання 2. Оформлення бронювання — Builder
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "lab10.src.task2" {
+  class "Task2Booking.Booking" as Booking <<immutable product>> {
+    - guest: String {readOnly}
+    - checkIn: LocalDate {readOnly}
+    - checkOut: LocalDate {readOnly}
+    - roomCategory: String {readOnly}
+    - breakfasts: boolean {readOnly}
+    - transfer: boolean {readOnly}
+    - lateCheckout: boolean {readOnly}
+    - childBed: boolean {readOnly}
+    - comment: String {readOnly}
+    + summary(): String
+  }
+
+  class "Task2Booking.Builder" as BookingBuilder <<Builder>> {
+    - guest: String
+    - checkIn: LocalDate
+    - checkOut: LocalDate
+    - roomCategory: String
+    - breakfasts: boolean
+    - transfer: boolean
+    - lateCheckout: boolean
+    - childBed: boolean
+    - comment: String
+    + guest(guest: String): Builder
+    + dates(checkIn: LocalDate, checkOut: LocalDate): Builder
+    + roomCategory(category: String): Builder
+    + breakfasts(): Builder
+    + transfer(): Builder
+    + lateCheckout(): Builder
+    + childBed(): Builder
+    + comment(comment: String): Builder
+    + build(): Booking
+  }
+
+  interface "Task2Booking.BookingRecipe" as BookingRecipe {
+    + create(guest: String, checkIn: LocalDate): Booking
+  }
+
+  class "Task2Booking.WeekendRecipe" as WeekendRecipe <<Recipe>>
+  class "Task2Booking.SkiWeekRecipe" as SkiWeekRecipe <<Recipe>>
+  class Main <<Runner>> {
+    + {static} main(args: String[]): void
+    + {static} run(): void
+  }
+}
+
+BookingBuilder ..> Booking : <<creates>>
+BookingRecipe <|.. WeekendRecipe
+BookingRecipe <|.. SkiWeekRecipe
+WeekendRecipe ..> BookingBuilder : builds with predefined steps
+SkiWeekRecipe ..> BookingBuilder : builds with predefined steps
+Main ..> BookingBuilder
+Main ..> WeekendRecipe
+Main ..> SkiWeekRecipe
+
+note right of BookingBuilder
+  build() перевіряє гостя,
+  категорію та дати.
+  За помилки кидає зрозуміле
+  IllegalStateException.
+end note
+
+note bottom of Booking
+  Після build() бронювання
+  не змінюється.
+  Побажання необов'язкові.
+end note
+@enduml

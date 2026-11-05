@@ -1,0 +1,67 @@
+@startuml task3-template-method
+title Завдання 3. Підтвердження бронювання — Template Method
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "lab10.src.task3" {
+  interface "Task3Confirmation.Confirmation" as Confirmation {
+    + render(): String
+    + send(bookingId: String): void
+  }
+
+  abstract class "Task3Confirmation.BookingChannel" as BookingChannel <<Template Method>> {
+    - name: String
+    + {final} confirm(bookingId: String): void
+    # createConfirmation(): Confirmation
+  }
+
+  class "Task3Confirmation.ReceptionChannel" as ReceptionChannel <<ConcreteClass>>
+  class "Task3Confirmation.WebsiteChannel" as WebsiteChannel <<ConcreteClass>>
+  class "Task3Confirmation.TourOperatorChannel" as TourOperatorChannel <<ConcreteClass>>
+  class "Task3Confirmation.OnlineServiceChannel" as OnlineServiceChannel <<ConcreteClass, extension>>
+
+  class "ReceptionConfirmation" as ReceptionConfirmation <<private product>>
+  class "WebsiteConfirmation" as WebsiteConfirmation <<private product>>
+  class "TourOperatorConfirmation" as TourOperatorConfirmation <<private product>>
+  class "OnlineServiceConfirmation" as OnlineServiceConfirmation <<private product>>
+
+  class "lab10.src.task3.Main" as Main <<Runner>> {
+    + {static} main(args: String[]): void
+    + {static} run(): void
+  }
+}
+
+BookingChannel <|-- ReceptionChannel
+BookingChannel <|-- WebsiteChannel
+BookingChannel <|-- TourOperatorChannel
+BookingChannel <|-- OnlineServiceChannel
+
+Confirmation <|.. ReceptionConfirmation
+Confirmation <|.. WebsiteConfirmation
+Confirmation <|.. TourOperatorConfirmation
+Confirmation <|.. OnlineServiceConfirmation
+
+ReceptionChannel ..> ReceptionConfirmation : <<creates>>
+WebsiteChannel ..> WebsiteConfirmation : <<creates>>
+TourOperatorChannel ..> TourOperatorConfirmation : <<creates>>
+OnlineServiceChannel ..> OnlineServiceConfirmation : <<creates>>
+BookingChannel ..> Confirmation : <<uses>>
+Main ..> BookingChannel : confirms without channel-specific branches
+Main ..> ReceptionChannel : instantiates
+Main ..> WebsiteChannel : instantiates
+Main ..> TourOperatorChannel : instantiates
+Main ..> OnlineServiceChannel : instantiates
+
+note right of BookingChannel
+  confirm() задає незмінний алгоритм:
+  перевірити номер → зафіксувати
+  бронювання → створити підтвердження
+  → надіслати.
+end note
+
+note bottom of OnlineServiceChannel
+  Новий канал додається новою
+  реалізацією BookingChannel та
+  Confirmation без зміни алгоритму.
+end note
+@enduml

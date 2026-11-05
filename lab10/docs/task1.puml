@@ -3,39 +3,86 @@ title Завдання 1. Підготовка номера за категор�
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 
-interface RoomItem <<AbstractProduct (база)>> {
-  + category(): String
-  + describe(): String
-}
-interface CosmeticsSet <<AbstractProduct A>>
-interface MinibarContent <<AbstractProduct B>>
-interface Textile <<AbstractProduct C>>
+package "lab10.src.task1" {
+  class Main <<Runner>> {
+    + {static} main(args: String[]): void
+    - {static} runTask1(): void
+    - {static} runTask2(): void
+    - {static} runTask3(): void
+  }
 
-abstract class BaseItem <<допоміжна база>> {
-  - category: String
-  - title: String
-  - content: String
-  + category(): String
-  + describe(): String
+  class Task1RoomPreparation <<Task 1 implementation and demo>> {
+    + {static} main(args: String[]): void
+    ~ {static} demoThreeCategories(service: HousekeepingService): void
+    ~ {static} demoNewCategoryChalet(service: HousekeepingService): void
+  }
+
+  interface "Task1RoomPreparation.RoomItem" as RoomItem {
+    + category(): String
+    + describe(): String
+  }
+  interface "Task1RoomPreparation.CosmeticsSet" as CosmeticsSet
+  interface "Task1RoomPreparation.MinibarContent" as MinibarContent
+  interface "Task1RoomPreparation.Textile" as Textile
+
+  abstract class "Task1RoomPreparation.BaseItem" as BaseItem {
+    - category: String
+    - title: String
+    - content: String
+    + category(): String
+    + describe(): String
+  }
+
+  class "Task1RoomPreparation.StandardCosmetics" as StandardCosmetics
+  class "Task1RoomPreparation.StandardMinibar" as StandardMinibar
+  class "Task1RoomPreparation.StandardTextile" as StandardTextile
+  class "Task1RoomPreparation.LuxeCosmetics" as LuxeCosmetics
+  class "Task1RoomPreparation.LuxeMinibar" as LuxeMinibar
+  class "Task1RoomPreparation.LuxeTextile" as LuxeTextile
+  class "Task1RoomPreparation.FamilyCosmetics" as FamilyCosmetics
+  class "Task1RoomPreparation.FamilyMinibar" as FamilyMinibar
+  class "Task1RoomPreparation.FamilyTextile" as FamilyTextile
+  class "Task1RoomPreparation.ChaletCosmetics" as ChaletCosmetics
+  class "Task1RoomPreparation.ChaletMinibar" as ChaletMinibar
+  class "Task1RoomPreparation.ChaletTextile" as ChaletTextile
+
+  interface "Task1RoomPreparation.RoomKitFactory" as RoomKitFactory <<AbstractFactory>> {
+    + category(): String
+    + createCosmetics(): CosmeticsSet
+    + createMinibar(): MinibarContent
+    + createTextile(): Textile
+  }
+  class "Task1RoomPreparation.StandardRoomKitFactory" as StandardRoomKitFactory <<ConcreteFactory>>
+  class "Task1RoomPreparation.LuxeRoomKitFactory" as LuxeRoomKitFactory <<ConcreteFactory>>
+  class "Task1RoomPreparation.FamilyRoomKitFactory" as FamilyRoomKitFactory <<ConcreteFactory>>
+  class "Task1RoomPreparation.ChaletRoomKitFactory" as ChaletRoomKitFactory <<ConcreteFactory>>
+
+  class "Task1RoomPreparation.HousekeepingService" as HousekeepingService <<Client>> {
+    - {static} SOURCE: String
+    + prepareRoom(roomNumber: String, factory: RoomKitFactory): void
+  }
+}
+
+package "lab10.src.task2" {
+  class "lab10.src.task2.Main" as Task2Main <<Runner>> {
+    + {static} run(): void
+  }
+}
+package "lab10.src.task3" {
+  class "lab10.src.task3.Main" as Task3Main <<Runner>> {
+    + {static} run(): void
+  }
+}
+
+class Log <<utility>> {
+  - {static} minutes: int
+  + {static} event(source: String, text: String): void
 }
 
 RoomItem <|-- CosmeticsSet
 RoomItem <|-- MinibarContent
 RoomItem <|-- Textile
 RoomItem <|.. BaseItem
-
-class StandardCosmetics <<ConcreteProduct>>
-class StandardMinibar <<ConcreteProduct>>
-class StandardTextile <<ConcreteProduct>>
-class LuxeCosmetics <<ConcreteProduct>>
-class LuxeMinibar <<ConcreteProduct>>
-class LuxeTextile <<ConcreteProduct>>
-class FamilyCosmetics <<ConcreteProduct>>
-class FamilyMinibar <<ConcreteProduct>>
-class FamilyTextile <<ConcreteProduct>>
-class ChaletCosmetics <<ConcreteProduct, розширення>>
-class ChaletMinibar <<ConcreteProduct, розширення>>
-class ChaletTextile <<ConcreteProduct, розширення>>
 
 BaseItem <|-- StandardCosmetics
 BaseItem <|-- StandardMinibar
@@ -63,64 +110,42 @@ Textile <|.. LuxeTextile
 Textile <|.. FamilyTextile
 Textile <|.. ChaletTextile
 
-interface RoomKitFactory <<AbstractFactory>> {
-  + category(): String
-  + createCosmetics(): CosmeticsSet
-  + createMinibar(): MinibarContent
-  + createTextile(): Textile
-}
-class StandardRoomKitFactory <<ConcreteFactory>>
-class LuxeRoomKitFactory <<ConcreteFactory>>
-class FamilyRoomKitFactory <<ConcreteFactory>>
-class ChaletRoomKitFactory <<ConcreteFactory, розширення>>
-
 RoomKitFactory <|.. StandardRoomKitFactory
 RoomKitFactory <|.. LuxeRoomKitFactory
 RoomKitFactory <|.. FamilyRoomKitFactory
 RoomKitFactory <|.. ChaletRoomKitFactory
 
-class HousekeepingService <<Client>> {
-  - {static} SOURCE: String
-  + prepareRoom(roomNumber: String, factory: RoomKitFactory): void
-}
-class Main <<Runner>> {
-  - {static} runTask1(): void
-  - {static} task1ThreeCategories(service: HousekeepingService): void
-  - {static} task1NewCategoryChalet(service: HousekeepingService): void
-  + {static} main(args: String[]): void
-}
-class Log <<утиліта журналу>> {
-  - {static} minutes: int
-  + {static} event(source: String, text: String): void
-}
+HousekeepingService ..> RoomKitFactory : <<uses>>
+HousekeepingService ..> CosmeticsSet : <<uses>>
+HousekeepingService ..> MinibarContent : <<uses>>
+HousekeepingService ..> Textile : <<uses>>
+HousekeepingService ..> Log : <<uses>>
+Task1RoomPreparation ..> HousekeepingService : runs demos
+Task1RoomPreparation ..> StandardRoomKitFactory : creates
+Task1RoomPreparation ..> LuxeRoomKitFactory : creates
+Task1RoomPreparation ..> FamilyRoomKitFactory : creates
+Task1RoomPreparation ..> ChaletRoomKitFactory : creates
+Main ..> Task1RoomPreparation : runs
+Main ..> Task2Main : runs
+Main ..> Task3Main : runs
 
-HousekeepingService "1" ..> "1" RoomKitFactory : <<use>>
-HousekeepingService "1" ..> "1" CosmeticsSet : <<use>>
-HousekeepingService "1" ..> "1" MinibarContent : <<use>>
-HousekeepingService "1" ..> "1" Textile : <<use>>
-HousekeepingService ..> Log
-Main "1" ..> "1" HousekeepingService
-Main "1" ..> "1" StandardRoomKitFactory
-Main "1" ..> "1" LuxeRoomKitFactory
-Main "1" ..> "1" FamilyRoomKitFactory
-Main "1" ..> "1" ChaletRoomKitFactory
-
-StandardRoomKitFactory "1" ..> "1" StandardCosmetics : <<create>>
-StandardRoomKitFactory "1" ..> "1" StandardMinibar : <<create>>
-StandardRoomKitFactory "1" ..> "1" StandardTextile : <<create>>
-LuxeRoomKitFactory "1" ..> "1" LuxeCosmetics : <<create>>
-LuxeRoomKitFactory "1" ..> "1" LuxeMinibar : <<create>>
-LuxeRoomKitFactory "1" ..> "1" LuxeTextile : <<create>>
-FamilyRoomKitFactory "1" ..> "1" FamilyCosmetics : <<create>>
-FamilyRoomKitFactory "1" ..> "1" FamilyMinibar : <<create>>
-FamilyRoomKitFactory "1" ..> "1" FamilyTextile : <<create>>
-ChaletRoomKitFactory "1" ..> "1" ChaletCosmetics : <<create>>
-ChaletRoomKitFactory "1" ..> "1" ChaletMinibar : <<create>>
-ChaletRoomKitFactory "1" ..> "1" ChaletTextile : <<create>>
+StandardRoomKitFactory ..> StandardCosmetics : <<creates>>
+StandardRoomKitFactory ..> StandardMinibar : <<creates>>
+StandardRoomKitFactory ..> StandardTextile : <<creates>>
+LuxeRoomKitFactory ..> LuxeCosmetics : <<creates>>
+LuxeRoomKitFactory ..> LuxeMinibar : <<creates>>
+LuxeRoomKitFactory ..> LuxeTextile : <<creates>>
+FamilyRoomKitFactory ..> FamilyCosmetics : <<creates>>
+FamilyRoomKitFactory ..> FamilyMinibar : <<creates>>
+FamilyRoomKitFactory ..> FamilyTextile : <<creates>>
+ChaletRoomKitFactory ..> ChaletCosmetics : <<creates>>
+ChaletRoomKitFactory ..> ChaletMinibar : <<creates>>
+ChaletRoomKitFactory ..> ChaletTextile : <<creates>>
 
 note right of HousekeepingService
   Не знає конкретних класів
   і не розгалужується за категорією.
-  Нова категорія = нові класи, без змін тут.
+  Нова категорія = нові класи,
+  без змін у службі.
 end note
 @enduml
