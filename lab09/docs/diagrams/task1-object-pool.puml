@@ -1,5 +1,4 @@
 @startuml
-!pragma layout smetana
 title Завдання 1 — Object Pool: електронні ключ-картки
 skinparam classAttributeIconSize 0
 
@@ -37,7 +36,7 @@ class ElectronicKeyCard <<Pooled Object>> {
 class Guest <<Domain Entity>> {
   - name: String
   - roomNumber: String
-  + getName(): String
+  + getName(): String 
   + getRoomNumber(): String
 }
 

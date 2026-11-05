@@ -1,3 +1,8 @@
 {
-  "java.project.sourcePaths": ["."]
+  "java.project.sourcePaths": ["."],
+  "files.associations": {
+    "*.puml": "plantuml"
+  },
+  "plantuml.render": "PlantUMLServer",
+  "plantuml.server": "https://www.plantuml.com/plantuml"
 }
