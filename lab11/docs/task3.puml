@@ -1,0 +1,62 @@
+@startuml task3-adapter
+title Завдання 3. Підключення системи замків — Adapter
+skinparam classAttributeIconSize 0
+
+class ReceptionSystem <<Client>> {
+  + programAccess(locks : RoomAccessSystem, room : int, checkOut : LocalDateTime) : void
+}
+
+interface RoomAccessSystem <<Target>> {
+  + grantAccess(roomNumber : int, checkOut : LocalDateTime) : AccessConfirmation
+}
+
+class AccessConfirmation {
+  - granted : boolean
+  - message : String
+  + isGranted() : boolean
+  + getMessage() : String
+}
+
+class VendorALockAdapter <<Adapter>> {
+  - {static} EPOCH_2000 : LocalDateTime
+  - api : VendorALockApi
+  + grantAccess(roomNumber : int, checkOut : LocalDateTime) : AccessConfirmation
+}
+
+class VendorBLockAdapter <<Adapter>> {
+  - api : VendorBLockApi
+  + grantAccess(roomNumber : int, checkOut : LocalDateTime) : AccessConfirmation
+}
+
+class VendorALockApi <<Adaptee>> {
+  + programAccess(floorWingCode : String, expirySecondsSince2000 : long) : int
+}
+
+class VendorBLockApi <<Adaptee>> {
+  + setDoorAccess(building : char, level : int, door : int, expiryUnixMillis : long) : boolean
+}
+
+class Log <<utility>> {
+  - {static} seconds : int
+  + {static} event(source : String, message : String) : void
+}
+
+ReceptionSystem "1" --> "1" RoomAccessSystem : використовує
+RoomAccessSystem ..> AccessConfirmation
+VendorALockAdapter ..|> RoomAccessSystem
+VendorBLockAdapter ..|> RoomAccessSystem
+VendorALockAdapter "1" *--> "1" VendorALockApi
+VendorBLockAdapter "1" *--> "1" VendorBLockApi
+VendorALockAdapter ..> AccessConfirmation
+VendorBLockAdapter ..> AccessConfirmation
+
+note right of VendorALockAdapter
+  305 → код "F03-A05"
+  дата виїзду → секунди від 2000 р.
+end note
+
+note right of VendorBLockAdapter
+  305 → поверх 3, двері 5
+  дата виїзду → мс Unix
+end note
+@enduml
