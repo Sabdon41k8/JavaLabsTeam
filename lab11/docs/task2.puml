@@ -1,0 +1,90 @@
+@startuml task2-facade
+title Завдання 2. Заселення гостя — Facade
+skinparam classAttributeIconSize 0
+left to right direction
+
+class ReceptionDesk <<Client>> {
+  - facade : CheckInFacade
+  + checkInGuest(guest : Guest) : int
+}
+
+class OnlineCheckInModule <<Client>> {
+  - facade : CheckInFacade
+  + checkInGuest(guest : Guest) : int
+}
+
+class CheckInFacade <<Facade>> {
+  - bookings : BookingVerificationService
+  - registration : GuestRegistrationService
+  - rooms : RoomAssignmentService
+  - keyCards : KeyCardService
+  - billing : BillingAccountService
+  - housekeeping : HousekeepingNotifier
+  + checkIn(guest : Guest) : int
+}
+
+class BookingVerificationService <<Subsystem>> {
+  - bookings : Map<String, String>
+  + verify(bookingId : String) : String
+}
+
+class GuestRegistrationService <<Subsystem>> {
+  + register(guest : Guest) : void
+}
+
+class RoomAssignmentService <<Subsystem>> {
+  - nextStandard : int
+  - nextLuxury : int
+  + assign(category : String) : int
+}
+
+class KeyCardService <<Subsystem>> {
+  + issue(room : int, guestName : String) : void
+  + reissue(room : int, guestName : String) : void
+}
+
+class BillingAccountService <<Subsystem>> {
+  + open(guest : Guest, room : int) : void
+}
+
+class HousekeepingNotifier <<Subsystem>> {
+  + notifyCheckIn(room : int) : void
+}
+
+class Guest {
+  - name : String
+  - bookingId : String
+  + getName() : String
+  + getBookingId() : String
+}
+
+class Log <<utility>> {
+  - {static} seconds : int
+  + {static} event(source : String, message : String) : void
+}
+
+ReceptionDesk "1" --> "1" CheckInFacade
+OnlineCheckInModule "1" --> "1" CheckInFacade
+
+CheckInFacade "1" o--> "1" BookingVerificationService
+CheckInFacade "1" o--> "1" GuestRegistrationService
+CheckInFacade "1" o--> "1" RoomAssignmentService
+CheckInFacade "1" o--> "1" KeyCardService
+CheckInFacade "1" o--> "1" BillingAccountService
+CheckInFacade "1" o--> "1" HousekeepingNotifier
+
+CheckInFacade ..> Guest
+ReceptionDesk ..> Guest
+OnlineCheckInModule ..> Guest
+
+note bottom of KeyCardService
+  Підсистеми доступні й напряму
+  (перевипуск ключ-карти без заселення)
+end note
+
+note top of CheckInFacade
+  Єдине місце з порядком заселення:
+  перевірка → реєстрація → номер →
+  ключ-карта → рахунок → покоївки
+end note
+@enduml
