@@ -1,0 +1,80 @@
+@startuml task1-decorator
+title Завдання 1. Додаткові послуги до номера — Decorator
+skinparam classAttributeIconSize 0
+
+interface Room <<Component>> {
+  + getDescription() : String
+  + getCost() : double
+}
+
+class StandardRoom <<ConcreteComponent>> {
+  + getDescription() : String
+  + getCost() : double
+}
+
+abstract class RoomServiceDecorator <<Decorator>> {
+  # room : Room
+  + RoomServiceDecorator(room : Room)
+  + getDescription() : String
+  + getCost() : double
+}
+
+class Breakfast <<ConcreteDecorator>> {
+  + Breakfast(room : Room)
+  + getDescription() : String
+  + getCost() : double
+}
+
+class MountainView <<ConcreteDecorator>> {
+  + MountainView(room : Room)
+  + getDescription() : String
+  + getCost() : double
+}
+
+class LateCheckout <<ConcreteDecorator>> {
+  + LateCheckout(room : Room)
+  + getDescription() : String
+  + getCost() : double
+}
+
+class Parking <<ConcreteDecorator>> {
+  + Parking(room : Room)
+  + getDescription() : String
+  + getCost() : double
+}
+
+class BabyCot <<ConcreteDecorator>> {
+  + BabyCot(room : Room)
+  + getDescription() : String
+  + getCost() : double
+}
+
+class Task1Runner <<Client>> {
+  + {static} main(args : String[]) : void
+  - {static} printRoomInfo(room : Room) : void
+}
+
+StandardRoom ..|> Room
+RoomServiceDecorator ..|> Room
+RoomServiceDecorator "1" o--> "1" Room : wraps
+
+Breakfast --|> RoomServiceDecorator
+MountainView --|> RoomServiceDecorator
+LateCheckout --|> RoomServiceDecorator
+Parking --|> RoomServiceDecorator
+BabyCot --|> RoomServiceDecorator
+
+Task1Runner ..> Room : використовує
+Task1Runner ..> StandardRoom : створює
+Task1Runner ..> Breakfast : створює
+Task1Runner ..> MountainView : створює
+Task1Runner ..> LateCheckout : створює
+Task1Runner ..> Parking : створює
+Task1Runner ..> BabyCot : створює
+
+note right of RoomServiceDecorator
+  Додає поведінку (опис/вартість)
+  делегуванням до обгорнутого Room
+end note
+
+@enduml
