@@ -1,0 +1,77 @@
+@startuml task4-proxy
+title Завдання 4. Контроль доступу до розрахунків — Proxy
+skinparam classAttributeIconSize 0
+
+interface BillingService <<Subject>> {
+  + charge(roomNumber : int, description : String, amount : double) : void
+  + getFullBill(roomNumber : int) : String
+  + refund(roomNumber : int, amount : double, reason : String) : void
+}
+
+class RealBillingService <<RealSubject>> {
+  - bills : Map<Integer, List<String>>
+  - totals : Map<Integer, Double>
+  + charge(roomNumber : int, description : String, amount : double) : void
+  + getFullBill(roomNumber : int) : String
+  + refund(roomNumber : int, amount : double, reason : String) : void
+}
+
+class BillingServiceProxy <<Proxy>> {
+  - realService : BillingService
+  - employee : Employee
+  - auditLog : AuditLog
+  + BillingServiceProxy(realService : BillingService, employee : Employee, auditLog : AuditLog)
+  - canViewBill() : boolean
+  - canRefund() : boolean
+  + charge(roomNumber : int, description : String, amount : double) : void
+  + getFullBill(roomNumber : int) : String
+  + refund(roomNumber : int, amount : double, reason : String) : void
+}
+
+class AuditLog <<Audit>> {
+  - entries : List<String>
+  + record(employeeName : String, operation : String, result : String) : void
+  + getEntries() : List<String>
+}
+
+class Employee {
+  - name : String
+  - role : Role
+  + getName() : String
+  + getRole() : Role
+}
+
+enum Role {
+  WAITER
+  RECEPTIONIST
+  ACCOUNTANT
+  SPA_STAFF
+  RENTAL_STAFF
+  --
+  - displayName : String
+  + getDisplayName() : String
+}
+
+class Task4Runner <<Client>> {
+  + {static} main(args : String[]) : void
+}
+
+RealBillingService ..|> BillingService
+BillingServiceProxy ..|> BillingService
+BillingServiceProxy "1" --> "1" BillingService : realService
+BillingServiceProxy "1" --> "1" Employee
+BillingServiceProxy "1" --> "1" AuditLog
+Employee "1" --> "1" Role
+Task4Runner ..> BillingService : використовує той самий інтерфейс
+Task4Runner ..> BillingServiceProxy : створює
+Task4Runner ..> RealBillingService : створює
+Task4Runner ..> AuditLog : створює
+Task4Runner ..> Employee : створює
+
+note right of BillingServiceProxy
+  Перевіряє права за роллю,
+  фіксує кожну операцію в аудиті
+  (успіх/відмова) з ім'ям працівника
+end note
+
+@enduml
