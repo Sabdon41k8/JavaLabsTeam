@@ -1,0 +1,65 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+enum RoomState {
+  FREE
+  BOOKED
+  OCCUPIED
+}
+
+class RoomCategory {
+  - name: String
+  - description: String
+  - area: double
+  - amenities: List<String>
+  - photos: List<String>
+  - basePrice: double
+  + getName(): String
+  + getDescription(): String
+  + getArea(): double
+  + getAmenities(): List<String>
+  + getPhotos(): List<String>
+  + getBasePrice(): double
+}
+
+class CategoryFactory {
+  - categories: Map<String, RoomCategory>
+  + getCategory(name: String, description: String, area: double, amenities: List<String>, photos: List<String>, basePrice: double): RoomCategory
+  + getCategoryCount(): int
+}
+
+class OccupancyRecord {
+  - roomNumber: int
+  - date: LocalDate
+  - state: RoomState
+  - category: RoomCategory
+  + getRoomNumber(): int
+  + getDate(): LocalDate
+  + getState(): RoomState
+  + getCategory(): RoomCategory
+}
+
+class Main {
+  + {static} main(args: String[]): void
+  - {static} findRecord(calendar: List<OccupancyRecord>, roomNumber: int, date: LocalDate): OccupancyRecord
+}
+
+CategoryFactory o-- "0..*" RoomCategory : caches/creates
+OccupancyRecord --> "1" RoomCategory : shared flyweight
+OccupancyRecord --> "1" RoomState
+Main ..> CategoryFactory : uses
+Main ..> OccupancyRecord : creates/manages
+Main ..> RoomCategory : uses
+
+note right of CategoryFactory
+  Повертає наявний об'єкт
+  категорії за назвою,
+  не створюючи новий
+end note
+
+note bottom of OccupancyRecord
+  Зберігає лише власні дані:
+  номер кімнати, дата, стан
+  + посилання на категорію
+end note
+@enduml
