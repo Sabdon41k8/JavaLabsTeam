@@ -1,0 +1,127 @@
+@startuml task3-bridge
+title Завдання 3. Керування обладнанням номера — Bridge
+skinparam classAttributeIconSize 0
+
+interface Equipment <<Implementor>> {
+  + getName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+class AirConditioner <<ConcreteImplementor>> {
+  - name : String
+  + AirConditioner(name : String)
+  + getName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+class Lighting <<ConcreteImplementor>> {
+  - name : String
+  + Lighting(name : String)
+  + getName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+class Curtains <<ConcreteImplementor>> {
+  - name : String
+  + Curtains(name : String)
+  + getName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+class HeatedFloor <<ConcreteImplementor>> {
+  - name : String
+  + HeatedFloor(name : String)
+  + getName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+abstract class ControlDevice <<Abstraction>> {
+  # equipment : Equipment
+  + ControlDevice(equipment : Equipment)
+  + {abstract} getDeviceName() : String
+  + {abstract} turnOn() : void
+  + {abstract} turnOff() : void
+  # logCommand(message : String) : void
+}
+
+class WallPanel <<RefinedAbstraction>> {
+  + WallPanel(equipment : Equipment)
+  + getDeviceName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+class RemoteControl <<RefinedAbstraction>> {
+  + RemoteControl(equipment : Equipment)
+  + getDeviceName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+class MobileApp <<RefinedAbstraction>> {
+  + MobileApp(equipment : Equipment)
+  + getDeviceName() : String
+  + turnOn() : void
+  + turnOff() : void
+}
+
+class Main <<Client>> {
+  + {static} main(args : String[]) : void
+}
+
+class Log <<utility>> {
+  - {static} seconds : int
+  + {static} event(source : String, message : String) : void
+}
+
+AirConditioner ..|> Equipment
+Lighting ..|> Equipment
+Curtains ..|> Equipment
+HeatedFloor ..|> Equipment
+
+ControlDevice "1" o--> "1" Equipment : bridge
+ControlDevice ..> Log : logs commands
+
+WallPanel --|> ControlDevice
+RemoteControl --|> ControlDevice
+MobileApp --|> ControlDevice
+
+Main ..> ControlDevice : configures
+Main ..> WallPanel : creates
+Main ..> RemoteControl : creates
+Main ..> MobileApp : creates
+Main ..> AirConditioner : creates
+Main ..> Lighting : creates
+Main ..> Curtains : creates
+Main ..> HeatedFloor : creates
+
+note top of Equipment
+  Усі класи, крім Main, реалізовані
+  як вкладені статичні класи
+  Task3RoomControl (для компактності)
+end note
+
+note right of ControlDevice
+  Абстракція (пристрій керування)
+  не залежить від реалізації
+  (обладнання): зв'язок лише
+  через інтерфейс Equipment
+end note
+
+note bottom of HeatedFloor
+  Нове обладнання додається
+  одним класом без змін
+  у пристроях керування
+end note
+
+note bottom of Main
+  Той самий кондиціонер
+  керується і з настінної панелі,
+  і з мобільного застосунку
+end note
+@enduml
