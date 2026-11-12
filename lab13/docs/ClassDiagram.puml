@@ -1,0 +1,80 @@
+@startuml
+skinparam classAttributeIconSize 0
+package "lab13.src.task1" {
+
+  enum RequestType {
+    TOWELS
+    WAKE_UP_CALL
+    CLEANING
+    MALFUNCTION
+    COMPLAINT
+    COMPENSATION
+    OTHER
+  }
+
+  class GuestRequest {
+    - type : RequestType
+    - description : String
+    + GuestRequest(type : RequestType, description : String)
+    + getType() : RequestType
+    + getDescription() : String
+    + toString() : String
+  }
+
+  abstract class RequestHandler {
+    - next : RequestHandler
+    - handlerName : String
+    # RequestHandler(handlerName : String)
+    + setNext(next : RequestHandler) : RequestHandler
+    + handle(request : GuestRequest) : String
+    # getHandlerName() : String
+    # {abstract} canHandle(request : GuestRequest) : boolean
+    # {abstract} process(request : GuestRequest) : String
+  }
+
+  class ReceptionHandler {
+    - acceptCleaningForMorning : boolean
+    + ReceptionHandler()
+    + ReceptionHandler(acceptCleaningForMorning : boolean)
+    # canHandle(request : GuestRequest) : boolean
+    # process(request : GuestRequest) : String
+  }
+
+  class HousekeepingHandler {
+    + HousekeepingHandler()
+    # canHandle(request : GuestRequest) : boolean
+    # process(request : GuestRequest) : String
+  }
+
+  class TechnicalHandler {
+    + TechnicalHandler()
+    # canHandle(request : GuestRequest) : boolean
+    # process(request : GuestRequest) : String
+  }
+
+  class ManagerHandler {
+    + ManagerHandler()
+    # canHandle(request : GuestRequest) : boolean
+    # process(request : GuestRequest) : String
+  }
+
+  class Main {
+    + {static} buildDayShiftChain() : RequestHandler
+    + {static} buildNightShiftChain() : RequestHandler
+    - {static} processAndLog(chain : RequestHandler, request : GuestRequest) : void
+    + {static} main(args : String[]) : void
+  }
+
+  GuestRequest --> RequestType
+  RequestHandler o--> "0..1 next" RequestHandler
+  RequestHandler ..> GuestRequest : handles
+
+  ReceptionHandler --|> RequestHandler
+  HousekeepingHandler --|> RequestHandler
+  TechnicalHandler --|> RequestHandler
+  ManagerHandler --|> RequestHandler
+
+  Main ..> RequestHandler : configures
+  Main ..> GuestRequest : creates
+}
+@enduml
