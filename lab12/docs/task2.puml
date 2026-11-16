@@ -1,0 +1,81 @@
+@startuml task2-composite
+title Завдання 2. Склад пакетів проживання — Composite
+skinparam classAttributeIconSize 0
+
+interface StayComponent <<Component>> {
+  + getName() : String
+  + getPrice() : double
+  + getServices() : List<String>
+  + getChildren() : List<StayComponent>
+}
+
+class HotelService <<Leaf>> {
+  - name : String
+  - price : double
+  + HotelService(name : String, price : double)
+  + getName() : String
+  + getPrice() : double
+  + getServices() : List<String>
+  + getChildren() : List<StayComponent>
+}
+
+class StayPackage <<Composite>> {
+  - name : String
+  - children : List<StayComponent>
+  + StayPackage(name : String)
+  + add(component : StayComponent) : void
+  + remove(component : StayComponent) : void
+  + getName() : String
+  + getPrice() : double
+  + getServices() : List<String>
+  + getChildren() : List<StayComponent>
+}
+
+class Main <<Client>> {
+  + {static} main(args : String[]) : void
+  - {static} printStructure(component : StayComponent, indent : String) : void
+  - {static} printPrice(component : StayComponent) : void
+}
+
+class Log <<utility>> {
+  - {static} seconds : int
+  + {static} event(source : String, message : String) : void
+}
+
+HotelService ..|> StayComponent
+StayPackage ..|> StayComponent
+StayPackage "1" o-- "0..*" StayComponent : children
+StayPackage ..> Log : logs add/remove
+
+Main ..> StayComponent : uses
+Main ..> HotelService : creates
+Main ..> StayPackage : creates
+Main ..> Log : logs
+
+note top of StayComponent
+  Усі класи, крім Main, реалізовані
+  як вкладені статичні класи
+  Task2StayPackages (для компактності)
+end note
+
+note right of StayComponent
+  Спільний інтерфейс для окремої
+  послуги та будь-якого пакета
+end note
+
+note right of StayPackage
+  Вартість і перелік послуг
+  обчислюються рекурсивно для
+  будь-якого рівня вкладеності
+end note
+
+note bottom of HotelService
+  Зберігає лише власні дані:
+  назву послуги та ціну
+end note
+
+note bottom of Main
+  Демонструє пакет «Сімейний тиждень»
+  з вкладеним пакетом «Дитячий клуб»
+end note
+@enduml
