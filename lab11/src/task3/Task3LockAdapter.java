@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 public class Task3LockAdapter {
-            static class Log {
+        static class Log {
         private static int seconds = 15 * 3600; // умовний час, починаємо з 15:00:00
  
         static void event(String source, String message) {
