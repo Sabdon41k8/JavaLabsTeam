@@ -1,0 +1,85 @@
+@startuml
+skinparam classAttributeIconSize 0
+package "lab13.src.task2" {
+
+  enum Department {
+    RESTAURANT
+    SPA
+    SKI_RENTAL
+    --
+    - displayName : String
+    + getDisplayName() : String
+  }
+
+  class GuestBill <<Receiver>> {
+    - guestName : String
+    - history : List<String>
+    - total : int
+    + GuestBill(guestName : String)
+    + apply(department : Department, description : String, amount : int, time : String, reverse : boolean) : String
+    + getGuestName() : String
+    + getTotal() : int
+    + printBill() : void
+    + printHistory() : void
+    + toString() : String
+  }
+
+  abstract class BillOperation <<Command>> {
+    - bill : GuestBill
+    - description : String
+    - amount : int
+    - time : String
+    - executed : boolean
+    # BillOperation(bill : GuestBill, description : String, amount : int, time : String)
+    + execute() : String
+    + undo(reversalTime : String) : String
+    + getBill() : GuestBill
+    + getDescription() : String
+    + getAmount() : int
+    + getTime() : String
+    # {abstract} getDepartment() : Department
+    + toString() : String
+  }
+
+  class RestaurantCharge <<ConcreteCommand>> {
+    + RestaurantCharge(bill : GuestBill, description : String, amount : int, time : String)
+    # getDepartment() : Department
+  }
+
+  class SpaCharge <<ConcreteCommand>> {
+    + SpaCharge(bill : GuestBill, description : String, amount : int, time : String)
+    # getDepartment() : Department
+  }
+
+  class SkiRentalCharge <<ConcreteCommand>> {
+    + SkiRentalCharge(bill : GuestBill, description : String, amount : int, time : String)
+    # getDepartment() : Department
+  }
+
+  class Accountant <<Invoker>> {
+    - name : String
+    + Accountant(name : String)
+    + execute(operation : BillOperation) : String
+    + undo(operation : BillOperation, time : String) : String
+  }
+
+  class Main <<Client>> {
+    - {static} executeAndLog(accountant : Accountant, operation : BillOperation) : void
+    - {static} undoAndLog(accountant : Accountant, operation : BillOperation, time : String) : void
+    + {static} main(args : String[]) : void
+  }
+
+  BillOperation o--> "1" GuestBill : receiver
+  BillOperation ..> Department : uses
+  RestaurantCharge --|> BillOperation
+  SpaCharge --|> BillOperation
+  SkiRentalCharge --|> BillOperation
+
+  Accountant ..> BillOperation : invokes
+  GuestBill ..> Department : writes to history
+
+  Main ..> Accountant : configures
+  Main ..> BillOperation : creates
+  Main ..> GuestBill : creates
+}
+@enduml
