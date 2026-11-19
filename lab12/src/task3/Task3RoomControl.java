@@ -1,33 +1,7 @@
 package lab12.src.task3;
 
-/**
- * Завдання 3. Керування обладнанням номера — шаблон Bridge.
- *
- * <p>Шаблон Bridge розділяє дві незалежні ієрархії:</p>
- * <ul>
- *   <li>Abstraction — {@link ControlDevice} та його нащадки: настінна панель,
- *       пульт і мобільний застосунок;</li>
- *   <li>Implementor — {@link Equipment} та конкретне обладнання:
- *       кондиціонер, освітлення, штори й тепла підлога.</li>
- * </ul>
- *
- * <p>Пристрій керування не створює обладнання сам, а отримує його через
- * конструктор. Тому будь-який пристрій можна поєднати з будь-яким обладнанням
- * під час виконання програми, а новий тип пристрою або обладнання додається
- * одним класом.</p>
- *
- * <p>Усі класи завдання зібрані в цьому файлі як вкладені статичні класи,
- * щоб структура рішення була компактною. Демонстраційний сценарій винесено
- * в окремий {@link Main}.</p>
- */
 public class Task3RoomControl {
 
-    /**
-     * Допоміжний журнал подій.
-     *
-     * <p>Час умовний: кожна наступна подія зсувається на 5 секунд, починаючи
-     * з 18:00:00. Формат рядка: {@code [час] [джерело] подія}.</p>
-     */
     public static final class Log {
         private static int seconds = 18 * 3600;
 
@@ -41,12 +15,6 @@ public class Task3RoomControl {
         }
     }
 
-    /**
-     * Implementor — спільний інтерфейс обладнання.
-     *
-     * <p>Визначає, ЩО саме може виконувати команду. Конкретні реалізації
-     * не знають, з якого пристрою керування надійшла команда.</p>
-     */
     public interface Equipment {
         String getName();
 
@@ -55,9 +23,6 @@ public class Task3RoomControl {
         void turnOff();
     }
 
-    /**
-     * ConcreteImplementor — кондиціонер.
-     */
     public static class AirConditioner implements Equipment {
         private final String name;
 
@@ -81,9 +46,6 @@ public class Task3RoomControl {
         }
     }
 
-    /**
-     * ConcreteImplementor — освітлення номера.
-     */
     public static class Lighting implements Equipment {
         private final String name;
 
@@ -107,12 +69,6 @@ public class Task3RoomControl {
         }
     }
 
-    /**
-     * ConcreteImplementor — штори з електроприводом.
-     *
-     * <p>Для штор {@code turnOn()} означає відкрити їх, а {@code turnOff()} —
-     * закрити.</p>
-     */
     public static class Curtains implements Equipment {
         private final String name;
 
@@ -136,12 +92,6 @@ public class Task3RoomControl {
         }
     }
 
-    /**
-     * ConcreteImplementor — тепла підлога.
-     *
-     * <p>Це нове обладнання, додане одним класом. Пристрої керування
-     * не змінювалися, бо працюють через інтерфейс {@link Equipment}.</p>
-     */
     public static class HeatedFloor implements Equipment {
         private final String name;
 
@@ -165,40 +115,24 @@ public class Task3RoomControl {
         }
     }
 
-    /**
-     * Abstraction — абстрактний пристрій керування.
-     *
-     * <p>Містить посилання на Implementor через інтерфейс {@link Equipment}.
-     * Саме це посилання є «мостом» між двома ієрархіями: пристрій керування
-     * відповідає за те, ЯК подається команда, а обладнання — за те, ЩО вона
-     * виконує.</p>
-     */
     public abstract static class ControlDevice {
-        /** Обладнання, яким керує цей пристрій. */
         protected final Equipment equipment;
 
         protected ControlDevice(Equipment equipment) {
             this.equipment = equipment;
         }
 
-        /** Назва пристрою для журналу подій. */
         public abstract String getDeviceName();
 
-        /** Подає обладнанню команду ввімкнення. */
         public abstract void turnOn();
 
-        /** Подає обладнанню команду вимкнення. */
         public abstract void turnOff();
 
-        /** Записує в журнал команду, подану конкретним пристроєм. */
         protected void logCommand(String message) {
             Log.event(getDeviceName(), message);
         }
     }
 
-    /**
-     * RefinedAbstraction — настінна панель.
-     */
     public static class WallPanel extends ControlDevice {
         public WallPanel(Equipment equipment) {
             super(equipment);
@@ -224,9 +158,7 @@ public class Task3RoomControl {
         }
     }
 
-    /**
-     * RefinedAbstraction — пульт дистанційного керування.
-     */
+
     public static class RemoteControl extends ControlDevice {
         public RemoteControl(Equipment equipment) {
             super(equipment);
@@ -251,9 +183,6 @@ public class Task3RoomControl {
         }
     }
 
-    /**
-     * RefinedAbstraction — мобільний застосунок гостя.
-     */
     public static class MobileApp extends ControlDevice {
         public MobileApp(Equipment equipment) {
             super(equipment);
