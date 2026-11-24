@@ -1,0 +1,33 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+interface PricingStrategy {
+  +getName(): String
+  +calculate(basePricePerNight: double, nights: int): double
+}
+
+class Booking {
+  -roomType: String
+  -basePricePerNight: double
+  -nights: int
+  -pricingStrategy: PricingStrategy
+  +Booking(roomType: String, basePricePerNight: double, nights: int, pricingStrategy: PricingStrategy)
+  +setPricingStrategy(pricingStrategy: PricingStrategy): void
+  +calculateTotal(): double
+  +printTotal(): void
+}
+
+class StandardPricing
+class SeasonalPricing
+class EarlyBookingPricing
+class LoyalGuestPricing
+class LastMinutePricing
+
+Booking --> PricingStrategy : pricingStrategy
+PricingStrategy <|.. StandardPricing
+PricingStrategy <|.. SeasonalPricing
+PricingStrategy <|.. EarlyBookingPricing
+PricingStrategy <|.. LoyalGuestPricing
+PricingStrategy <|.. LastMinutePricing
+
+@enduml
