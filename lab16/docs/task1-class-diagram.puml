@@ -1,0 +1,119 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+interface Charge {
+  +getDescription(): String
+  +getAmount(): double
+  +accept(visitor: ChargeVisitor): void
+}
+
+interface ChargeVisitor {
+  +visit(charge: AccommodationCharge): void
+  +visit(charge: FoodCharge): void
+  +visit(charge: SpaCharge): void
+  +visit(charge: RentalCharge): void
+  +visit(charge: TouristTaxCharge): void
+}
+
+class Invoice {
+  -guestName: String
+  -charges: List<Charge>
+  +Invoice(guestName: String)
+  +addCharge(charge: Charge): void
+  +getGuestName(): String
+  +getCharges(): List<Charge>
+  +apply(visitor: ChargeVisitor): void
+}
+
+class AccommodationCharge {
+  -description: String
+  -amount: double
+  +AccommodationCharge(description: String, amount: double)
+  +getDescription(): String
+  +getAmount(): double
+  +accept(visitor: ChargeVisitor): void
+}
+
+class FoodCharge {
+  -description: String
+  -amount: double
+  +FoodCharge(description: String, amount: double)
+  +getDescription(): String
+  +getAmount(): double
+  +accept(visitor: ChargeVisitor): void
+}
+
+class SpaCharge {
+  -description: String
+  -amount: double
+  +SpaCharge(description: String, amount: double)
+  +getDescription(): String
+  +getAmount(): double
+  +accept(visitor: ChargeVisitor): void
+}
+
+class RentalCharge {
+  -description: String
+  -amount: double
+  +RentalCharge(description: String, amount: double)
+  +getDescription(): String
+  +getAmount(): double
+  +accept(visitor: ChargeVisitor): void
+}
+
+class TouristTaxCharge {
+  -description: String
+  -amount: double
+  +TouristTaxCharge(description: String, amount: double)
+  +getDescription(): String
+  +getAmount(): double
+  +accept(visitor: ChargeVisitor): void
+}
+
+class TaxVisitor {
+  -totalTax: double
+  +visit(charge: AccommodationCharge): void
+  +visit(charge: FoodCharge): void
+  +visit(charge: SpaCharge): void
+  +visit(charge: RentalCharge): void
+  +visit(charge: TouristTaxCharge): void
+  +getTotalTax(): double
+}
+
+class BonusPointsVisitor {
+  -totalPoints: int
+  +visit(charge: AccommodationCharge): void
+  +visit(charge: FoodCharge): void
+  +visit(charge: SpaCharge): void
+  +visit(charge: RentalCharge): void
+  +visit(charge: TouristTaxCharge): void
+  +getTotalPoints(): int
+}
+
+class TourOperatorReportVisitor {
+  -totalAmount: double
+  -items: int
+  +visit(charge: AccommodationCharge): void
+  +visit(charge: FoodCharge): void
+  +visit(charge: SpaCharge): void
+  +visit(charge: RentalCharge): void
+  +visit(charge: TouristTaxCharge): void
+  +getTotalAmount(): double
+  +getItems(): int
+}
+
+Charge <|.. AccommodationCharge
+Charge <|.. FoodCharge
+Charge <|.. SpaCharge
+Charge <|.. RentalCharge
+Charge <|.. TouristTaxCharge
+
+ChargeVisitor <|.. TaxVisitor
+ChargeVisitor <|.. BonusPointsVisitor
+ChargeVisitor <|.. TourOperatorReportVisitor
+
+Invoice o-- "*" Charge : charges
+Invoice ..> ChargeVisitor : apply
+Charge ..> ChargeVisitor : accept
+
+@enduml
