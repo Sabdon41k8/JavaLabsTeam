@@ -1,0 +1,42 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+interface RoomState {
+  +getName(): String
+  +book(room: Room): void
+  +checkIn(room: Room): void
+  +checkOut(room: Room): void
+  +clean(room: Room): void
+  +startRepair(room: Room): void
+  +finishRepair(room: Room): void
+}
+
+class Room {
+  -number: int
+  -state: RoomState
+  +Room(number: int)
+  +getNumber(): int
+  +getState(): RoomState
+  +setState(state: RoomState): void
+  +book(): void
+  +checkIn(): void
+  +checkOut(): void
+  +clean(): void
+  +startRepair(): void
+  +finishRepair(): void
+}
+
+class FreeCleanState
+class BookedState
+class OccupiedState
+class NeedsCleaningState
+class UnderRepairState
+
+Room --> RoomState : state
+RoomState <|.. FreeCleanState
+RoomState <|.. BookedState
+RoomState <|.. OccupiedState
+RoomState <|.. NeedsCleaningState
+RoomState <|.. UnderRepairState
+
+@enduml
