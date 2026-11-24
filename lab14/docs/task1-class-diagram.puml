@@ -1,0 +1,77 @@
+@startuml
+title Завдання 1 — Виїзд гостя (Спостерігач)
+
+skinparam classAttributeIconSize 0
+
+class CheckoutEvent {
+  -guestName: String
+  -roomNumber: int
+  -review: String
+  -night: boolean
+  +CheckoutEvent(guestName: String, roomNumber: int, review: String, night: boolean)
+  +getGuestName(): String
+  +getRoomNumber(): int
+  +getReview(): String
+  +hasReview(): boolean
+  +isNight(): boolean
+}
+
+interface CheckoutListener {
+  +onGuestCheckout(event: CheckoutEvent): void
+  +getName(): String
+}
+
+class CheckoutNotifier {
+  -listeners: List<CheckoutListener>
+  +subscribe(listener: CheckoutListener): void
+  +unsubscribe(listener: CheckoutListener): void
+  +notifyCheckout(event: CheckoutEvent): void
+}
+
+class HousekeepingService {
+  +onGuestCheckout(event: CheckoutEvent): void
+  +getName(): String
+}
+
+class MinibarService {
+  +onGuestCheckout(event: CheckoutEvent): void
+  +getName(): String
+}
+
+class AccountingService {
+  +onGuestCheckout(event: CheckoutEvent): void
+  +getName(): String
+}
+
+class LockSystemService {
+  +onGuestCheckout(event: CheckoutEvent): void
+  +getName(): String
+}
+
+class MarketingService {
+  +onGuestCheckout(event: CheckoutEvent): void
+  +getName(): String
+}
+
+class Main {
+  +{static} main(args: String[]): void
+}
+
+CheckoutNotifier o-- "*" CheckoutListener : notifies
+CheckoutListener <|.. HousekeepingService
+CheckoutListener <|.. MinibarService
+CheckoutListener <|.. AccountingService
+CheckoutListener <|.. LockSystemService
+CheckoutListener <|.. MarketingService
+
+CheckoutListener ..> CheckoutEvent : uses
+CheckoutNotifier ..> CheckoutEvent : delivers
+
+Main ..> CheckoutNotifier
+Main ..> CheckoutEvent
+Main ..> HousekeepingService
+Main ..> AccountingService
+Main ..> LockSystemService
+Main ..> MarketingService
+
+@enduml
