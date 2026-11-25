@@ -1,0 +1,126 @@
+@startuml
+title Завдання 2 — Розумний номер (Посередник)
+
+skinparam classAttributeIconSize 0
+
+enum RoomEvent {
+  WINDOW_OPENED
+  GUEST_LEFT
+  EVENING
+}
+
+interface RoomDevice <<Colleague>> {
+  +getName(): String
+  +setMediator(mediator: RoomMediator): void
+  +handle(event: RoomEvent): void
+}
+
+abstract class SmartDevice <<AbstractColleague>> {
+  #mediator: RoomMediator
+  +setMediator(mediator: RoomMediator): void
+  #emit(event: RoomEvent): void
+  #log(text: String): void
+}
+
+interface RoomMediator <<Mediator>> {
+  +register(device: RoomDevice): void
+  +notify(source: RoomDevice, event: RoomEvent): void
+}
+
+class SmartRoomMediator <<ConcreteMediator>> {
+  -windowSensor: WindowSensor
+  -presenceSensor: PresenceSensor
+  -eveningTimer: EveningTimer
+  -airConditioner: AirConditioner
+  -lighting: Lighting
+  -curtains: Curtains
+  +SmartRoomMediator(windowSensor: WindowSensor, presenceSensor: PresenceSensor, eveningTimer: EveningTimer, airConditioner: AirConditioner, lighting: Lighting, curtains: Curtains)
+  +register(device: RoomDevice): void
+  +notify(source: RoomDevice, event: RoomEvent): void
+}
+
+class WindowSensor <<ConcreteColleague>> {
+  +getName(): String
+  +openWindow(): void
+}
+
+class PresenceSensor <<ConcreteColleague>> {
+  +getName(): String
+  +guestLeft(): void
+}
+
+class EveningTimer <<ConcreteColleague>> {
+  +getName(): String
+  +eveningArrived(): void
+}
+
+class AirConditioner <<ConcreteColleague>> {
+  -running: boolean
+  +getName(): String
+  +handle(event: RoomEvent): void
+}
+
+class Lighting <<ConcreteColleague>> {
+  -mode: String
+  +getName(): String
+  +handle(event: RoomEvent): void
+}
+
+class Curtains <<ConcreteColleague>> {
+  -closed: boolean
+  +getName(): String
+  +handle(event: RoomEvent): void
+}
+
+class Log <<Utility>> {
+  -{static} minutes: int
+  +{static} event(source: String, text: String): void
+}
+
+class Main <<Runner>> {
+  +{static} main(args: String[]): void
+}
+
+RoomDevice <|.. SmartDevice
+SmartDevice <|-- WindowSensor
+SmartDevice <|-- PresenceSensor
+SmartDevice <|-- EveningTimer
+SmartDevice <|-- AirConditioner
+SmartDevice <|-- Lighting
+SmartDevice <|-- Curtains
+
+RoomMediator <|.. SmartRoomMediator
+
+SmartDevice --> RoomMediator : mediator
+SmartRoomMediator o-- "1" WindowSensor : windowSensor
+SmartRoomMediator o-- "1" PresenceSensor : presenceSensor
+SmartRoomMediator o-- "1" EveningTimer : eveningTimer
+SmartRoomMediator o-- "1" AirConditioner : airConditioner
+SmartRoomMediator o-- "1" Lighting : lighting
+SmartRoomMediator o-- "1" Curtains : curtains
+
+RoomDevice ..> RoomEvent : uses
+SmartRoomMediator ..> RoomEvent : applies rules
+SmartDevice ..> Log : writes journal
+SmartRoomMediator ..> Log : writes journal
+
+Main ..> SmartRoomMediator : registers devices
+Main ..> WindowSensor : initiate event
+Main ..> PresenceSensor : initiate event
+Main ..> EveningTimer : initiate event
+
+note right of SmartRoomMediator
+  Усі правила взаємодії описані тут:
+  відчинене вікно → вимкнути кондиціонер;
+  гість вийшов → вимкнути світло й кондиціонер;
+  вечір → зачинити штори й увімкнути нічне світло.
+end note
+
+note bottom of WindowSensor
+  Пристрої не знають одне про одного.
+  Новий пристрій додається новим класом
+  та реєстрацією в координаторі —
+  існуючі пристрої не змінюються.
+end note
+
+@enduml
