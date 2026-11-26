@@ -1,0 +1,74 @@
+@startuml
+title Завдання 3 — Підготовка номерів різних категорій (Шаблонний метод)
+
+skinparam classAttributeIconSize 0
+
+abstract class RoomPreparation <<AbstractClass / Template>> {
+  -roomType: String
+  #RoomPreparation(roomType: String)
+  +{final} prepare(): void
+  #getRoomType(): String
+  #clean(): void
+  #changeLinen(): void
+  #restockMinibar(): void
+  #checkEquipment(): void
+  #additionalPreparation(): void
+  #finalInspection(): void
+}
+
+class StandardRoomPreparation <<ConcreteClass>> {
+  +StandardRoomPreparation()
+}
+
+class SuitePreparation <<ConcreteClass>> {
+  +SuitePreparation()
+  #additionalPreparation(): void
+}
+
+class ChaletPreparation <<ConcreteClass>> {
+  +ChaletPreparation()
+  #additionalPreparation(): void
+}
+
+class FamilyRoomPreparation <<ConcreteClass, extension>> {
+  +FamilyRoomPreparation()
+  #additionalPreparation(): void
+}
+
+class Log <<Utility>> {
+  -{static} minutes: int
+  +{static} event(source: String, text: String): void
+}
+
+class Main <<Runner>> {
+  +{static} main(args: String[]): void
+}
+
+RoomPreparation <|-- StandardRoomPreparation
+RoomPreparation <|-- SuitePreparation
+RoomPreparation <|-- ChaletPreparation
+RoomPreparation <|-- FamilyRoomPreparation
+
+RoomPreparation ..> Log : writes journal
+Main ..> RoomPreparation : prepare()
+
+note right of RoomPreparation
+  prepare() — шаблонний метод з модифікатором final:
+  прибирання → заміна білизни → поповнення мінібару
+  → перевірка обладнання → additionalPreparation()
+  → фінальний огляд.
+  Порядок не змінюється категоріями.
+end note
+
+note bottom of StandardRoomPreparation
+  Стандартний номер не перевизначає жодного етапу.
+  additionalPreparation() має поведінку
+  за замовчуванням і може перевизначатися.
+end note
+
+note bottom of FamilyRoomPreparation
+  Нова категорія додається одним класом:
+  базовий алгоритм та інші категорії не змінюються.
+end note
+
+@enduml
